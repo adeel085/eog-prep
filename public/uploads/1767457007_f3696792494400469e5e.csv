@@ -1,0 +1,32 @@
+Topic,level,question_type,question,solution,answer_1,is_correct_1,answer_2,is_correct_2,answer_3,is_correct_3,answer_4,is_correct_4
+Mult Dec - Intro,1,text,"For 4.5 x 6.2, how many places would you move the decimal in the answer?",2  the 5 and 2 are to the right,2,1,,,,,,
+Mult Dec - Intro,1,text,"For 4.5 x 62, how many places would you move the decimal in the answer?",1 the 5 is to the right,1,1,,,,,,
+Mult Dec - Intro,1,text,"For 4.5 x 6.22, how many places would you move the decimal in the answer?",3 the 5 and 2 and 2 ,3,1,,,,,,
+Mult Dec - Intro,1,text,"For 4.15 x 6.2, how many places would you move the decimal in the answer?",3 the 1 and 5 and 2 are to the right,3,1,,,,,,
+Mult Dec - Intro,1,text,"For 14.5 x 62, how many places would you move the decimal in the answer?",1  the 5 is to the right,1,1,,,,,,
+Mult Dec - Intro,1,text,"For 4.53 x 6.222, how many places would you move the decimal in the answer?","5 the 5, 3, 2, 2, 2 are all to the right",5,1,,,,,,
+Mult Dec - Intro,1,text,"For 4.5 x 6.233, how many places would you move the decimal in the answer?","4 the 5, 2, 3, 3 are all to the right",4,1,,,,,,
+Mult Dec - Intro,1,text,"For 45 x 6.2, how many places would you move the decimal in the answer?",1 the 2 is to the right,1,1,,,,,,
+Mult Dec - Intro,1,text,"For 4.522 x 62, how many places would you move the decimal in the answer?","3 the 5, 2, 2 is to the right",3,1,,,,,,
+Mult Dec - Intro,1,text,"For 4.005 x 6.2, how many places would you move the decimal in the answer?","4 the 0,0,5,2 is to the right",4,1,,,,,,
+Mult Dec - Intro,1,text,Do you have to line up the decimals when you multiply decimals?,"no, it doesn't matter",no,1,,,,,,
+Mult Dec - Intro,1,text,Do you have to line up the decimals when you multiply decimals?,,yes,1,,,,,,
+Mult Dec - Intro,1,mcq,You line up the decimals when you ______ decimals,add or subtract,multiply,,add or subtract,1,divide,,none,
+Mult Dec - Intro,1,text,You do NOT need to line up the decimal when you _______,multiply,multiply,1,,,,,,
+Mult Dec - Intro,1,mcq,Which problem would you move the decimal 3 times?,3.4 x .56 ,3.4 x 56 ,,3.4 x 5.6 ,,3.4 x .56 ,1,34 x .56 ,
+Mult Dec - Intro,1,mcq,Which problem would you move the decimal 2 times?,3.4 x 5.6 ,3.4 x .56 ,,3.4 x .0056 ,,3.4 x 5.6 ,1,.34 x .56 ,
+Mult Dec - Intro,1,mcq,Which problem would you move the decimal 1 time?,3.4 x 56 ,3.4 x 56 ,1,3.4 x 5.6 ,,3.4 x .56 ,,34 x .56 ,
+Mult Dec - Intro,2,mcq,Solve:    .3 x 2=,0.6,0.6,1,0.006,,0.06,,0.5,
+Mult Dec - Intro,2,mcq,Solve:    .3 x .2=,0.06,0.6,,0.06,1,0.006,,0.5,
+Mult Dec - Intro,2,mcq,Solve:    .3 x .02=,0.006,0.6,,0.06,,6.6,,0.006,1
+Mult Dec - Intro,2,mcq,Solve:    3 x .2=,0.6,0.6,1,,,,,,
+Mult Dec - Intro,2,mcq,Solve:    .3 x 4=,1.2,0.12,,0.012,,1.02,,1.2,1
+Mult Dec - Intro,2,mcq,Solve:    .3 x .4=,0.12,1.2,,0.12,1,0.012,,0.7,
+Mult Dec - Intro,2,mcq,Solve:    .3 x .04=,0.012,1.2,,0.12,,0.0012,,0.012,1
+Mult Dec - Intro,2,mcq,Solve:    .03 x 4=,0.12,0.12,1,1.2,,0.012,,12,
+Mult Dec - Intro,2,mcq,Solve:    .3 x 2=,0.6,0.06,,0.006,,0.5,,0.6,1
+Mult Dec - Intro,2,mcq,Solve:    .3 x .004=,0.0012,1.2,,0.12,,0.012,,0.0012,1
+Mult Dec - Intro,2,mcq,Solve:    .3 x .08=,0.024,2.4,,0.024,1,0.0024,,0.24,
+Mult Dec - Intro,2,mcq,Solve:    .7 x .2=,0.14,0.14,1,1.4,,0.014,,0.0014,
+Mult Dec - Intro,2,mcq,Solve:    .07 x .2=,0.014,1.4,,0.14,,0.0014,,0.014,1
+Mult Dec - Intro,2,mcq,Solve:    .7 x .002=,0.0014,1.4,,0.0014,1,0.14,,0.014,

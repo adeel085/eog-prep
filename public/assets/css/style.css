@@ -1,0 +1,69 @@
+.navbar-brand-text {
+    font-size: 24px;
+    font-weight: bold;
+    color: #222222;
+}
+
+.btn-primary {
+    background: #222222;
+    border-color: #222222;
+}
+
+.btn-primary:hover, .btn-primary:active {
+    background: #222222 !important;
+    border-color: #222222 !important;
+}
+
+.btn-primary.focus, .btn-primary:focus {
+    box-shadow: 0 0 0 .2rem rgb(22 22 22 / 20%);
+    background: #222222 !important;
+    border-color: #222222 !important;
+}
+
+.btn-primary:active {
+    background: #222222 !important;
+    border-color: #222222 !important;
+    box-shadow: none !important;
+}
+
+.form-control:focus {
+    box-shadow: none !important;
+}
+
+.modal-header {
+    padding-bottom: 0;
+    border: none;
+}
+
+.modal-footer {
+    padding-top: 0;
+    border: none;
+}
+
+.table-action-btn {
+    color: #222;
+    font-size: 17px;
+}
+
+.table-action-btn:hover {
+    color: #222222;
+}
+
+ul.pagination {
+    margin: 0;
+}
+
+ul.pagination>li {
+    padding: 8px 10px;
+    background: #eee;
+    line-height: 1;
+}
+ul.pagination>li>a {
+    color: #222;
+}
+ul.pagination>li.active {
+    background: #222222;
+}
+ul.pagination>li.active>a {
+    color: #fff;
+}
