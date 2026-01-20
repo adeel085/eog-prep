@@ -3,20 +3,12 @@
 namespace App\Controllers;
 
 use App\Models\StudentProgressModel;
-use App\Models\StudentGradeModel;
-use App\Models\GradeRouteModel;
 use App\Models\QuestionAnswersModel;
 use App\Models\TopicModel;
 use App\Models\QuestionModel;
-use App\Models\StudentSessionModel;
 use App\Models\UserLoginSessionModel;
-use App\Models\StudentSessionStateModel;
-use App\Models\StudentSessionQuestionModel;
 use App\Models\TopicQuestionsModel;
 use App\Models\StudentQuestionsResultsModel;
-use App\Models\GradeModel;
-use App\Models\GradeWeeklyGoalModel;
-use App\Models\StudentWeeklyPointsModel;
 use App\Models\UserModel;
 
 use DateTime;
@@ -33,202 +25,47 @@ class Home extends BaseController
             return redirect()->to(base_url('/'));
         }
 
-        // Check if student level up date is today then don't let them continue
-        $userModel = new UserModel();
-        $lastLevelUpDate = $userModel->getUserMeta('last_level_up_date', $this->user['id'], true);
-        if ($lastLevelUpDate == date('Y-m-d')) {
-            return view('continue_tomorrow', [
-                'pageTitle' => 'Continue Tomorrow',
-                'user' => $this->user
-            ]);
-        }
+        $topicId = $this->request->getGet('topic_id');
+        $difficultyLevel = $this->request->getGet('difficulty_level');
 
         $topicModel = new TopicModel();
-        $studentGradeModel = new StudentGradeModel();
-        $gradeRouteModel = new GradeRouteModel();
-        $studentProgressModel = new StudentProgressModel();
-        $studentSessionStateModel = new StudentSessionStateModel();
-        $studentSessionQuestionModel = new StudentSessionQuestionModel();
-        $gradeModel = new GradeModel();
+        $topic = $topicModel->find($topicId);
 
-        $studentGrade = $studentGradeModel->where('student_id', $this->user['id'])->first();
-
-        if (!$studentGrade) {
-            echo "No student grade found";
-            exit;
+        if (!$topic) {
+            return redirect()->to(base_url('/'));
         }
 
-        $timerMinutes = 5;
+        $questionModel = new QuestionModel();
+        $topicQuestionsModel = new TopicQuestionsModel();
+        $questionAnswersModel = new QuestionAnswersModel();
 
-        if ($studentGrade) {
-            $timerMinutes = $gradeModel->where('id', $studentGrade['grade_id'])->first()['timer_minutes'];
+        $topicQuestions = $topicQuestionsModel->where('topic_id', $topicId)->findAll();
+
+        $questionsIds = [];
+        foreach ($topicQuestions as $topicQuestion) {
+            $questionsIds[] = $topicQuestion['question_id'];
         }
 
-        $studentSessionState = $studentSessionStateModel->where('student_id', $this->user['id'])->first();
+        $questions = $questionModel->whereIn('id', $questionsIds)->where('level', $difficultyLevel)->findAll();
 
-        // Check if we have the data in session
-        if ($studentSessionState && $studentSessionState['completed'] == 0) {
-
-            $startTime = new DateTime($studentSessionState['created_at']);
-
-            // Add the timer minutes
-            $endTime = clone $startTime;
-            $endTime->modify("+{$timerMinutes} minutes");
-
-            // Get the current time
-            $currentTime = new DateTime();
-
-            // Check if the timer has expired
-            if ($currentTime >= $endTime) {
-                try {
-                    $this->endCurrentSession(false, false);
-                    return redirect()->to('/');
-                }
-                catch (\Exception $e) {
-                    if ($e->getMessage() == 'session_state_not_found') {
-                        return redirect()->to('/');
-                    }
-                    else if ($e->getMessage() == 'no_topics') {
-                        return view('no_topics', [
-                            'pageTitle' => 'No Topics',
-                            'user' => $this->user
-                        ]);
-                    }
-                    else if ($e->getMessage() == 'student_grade_not_found') {
-                        echo "Student grade not found";
-                        exit();
-                    }
-                    else if ($e->getMessage() == 'progress_record_not_found') {
-                        echo "Student progress record not found";
-                        exit();
-                    }
-                    else if ($e->getMessage() == 'all_topics_completed') {
-                        echo "All topics are completed";
-                        exit();
-                    }
-                    else {
-                        echo $e->getMessage();
-                        exit();
-                    }
-                }
-            }
-
-            // Check if current question index is greater than or equal to 25
-            if ($studentSessionState['current_question_index'] >= 25) {
-                // redirect to evaluation page
-                return redirect()->to('/evaluation');
-            }
-
-            $currentTopic = $topicModel->find($studentSessionState['current_topic_id']);
-            $currentLevel = $studentSessionState['current_level'];
-
-            // Check if the current topic has been deleted
-            if (!$currentTopic) {
-
-                // delete the student session state
-                $studentSessionStateModel->where('student_id', $this->user['id'])->delete();
-
-                // delete the student progress where the topic id is the current topic id
-                $studentProgressModel->where([
-                    'student_id' => $this->user['id'],
-                    'topic_id' => $studentSessionState['current_topic_id']
-                ])->delete();
-
-                // delete the student session question for this student
-                $studentSessionQuestionModel->where('student_id', $this->user['id'])->delete();
-                
-                // reload the page
-                return redirect()->to('/');
-            }
-
-            return view('home', [
-                'pageTitle' => 'Home',
-                'user' => $this->user,
-                'currentTopic' => $currentTopic,
-                'currentLevel' => $currentLevel,
-                'remainingSeconds' => max(0, $endTime->getTimestamp() - $currentTime->getTimestamp())
-            ]);
-        }
-        
-        $gradeRoute = $gradeRouteModel->where('grade_id', $studentGrade['grade_id'])->findAll();
-
-        $topicsIds = [];
-
-        foreach ($gradeRoute as $route) {
-            if ($topicModel->find($route['topic_id'])) {
-                $topicsIds[] = $route['topic_id'];
-            }
+        if (count($questions) == 0) {
+            return redirect()->to(base_url('/'));
         }
 
-        if (count($topicsIds) == 0) {
-            return view('no_topics', [
-                'pageTitle' => 'No Topics',
-                'user' => $this->user
-            ]);
+        foreach ($questions as &$question) {
+            $answers = $questionAnswersModel->where('question_id', $question['id'])->findAll();
+            $question['answers'] = $answers;
         }
 
-        $currentTopic = null;
-        $currentLevel = 0;
-
-        foreach ($topicsIds as $topicId) {
-            $studentProgressRecord = $studentProgressModel->where([
-                'student_id' => $this->user['id'],
-                'topic_id' => $topicId
-            ])->first();
-
-            if (!$studentProgressRecord) {
-                $studentProgressModel->insert([
-                    'student_id' => $this->user['id'],
-                    'topic_id' => $topicId,
-                    'level' => 1,
-                    'completed' => 0
-                ]);
-
-                $currentTopic = $topicModel->find($topicId);
-
-                if ($currentTopic) {
-                    $currentLevel = 1;
-                    break;
-                }
-            }
-            else {
-                if ($studentProgressRecord['completed'] == 0) {
-                    $currentTopic = $topicModel->find($topicId);
-
-                    if ($currentTopic) {
-                        $currentLevel = $studentProgressRecord['level'];
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (!$currentTopic) {
-            return view('passed_all', [
-                'pageTitle' => 'Passed All Levels',
-                'user' => $this->user
-            ]);
-        }
-
-        // Delete the old student session state
-        $studentSessionStateModel->where('student_id', $this->user['id'])->delete();
-
-        // Eneter all the session information into the database
-        $studentSessionStateModel->insert([
-            'student_id' => $this->user['id'],
-            'current_topic_id' => $currentTopic['id'],
-            'current_level' => $currentLevel,
-            'current_question_index' => 0,
-            'incorrect_count' => 0,
-            'correct_count' => 0
-        ]);
+        // Randomize the questions
+        shuffle($questions);
 
         return view('home', [
             'pageTitle' => 'Home',
             'user' => $this->user,
-            'currentTopic' => $currentTopic,
-            'currentLevel' => $currentLevel,
-            'remainingSeconds' => $timerMinutes * 60
+            'currentTopic' => $topic,
+            'currentLevel' => $difficultyLevel,
+            'questions' => $questions
         ]);
     }
 
@@ -242,115 +79,13 @@ class Home extends BaseController
             return redirect()->to(base_url('/'));
         }
 
-        $studentSessionStateModel = new StudentSessionStateModel();
-        $gradeRouteModel = new GradeRouteModel();
         $topicModel = new TopicModel();
-        $studentProgressModel = new StudentProgressModel();
-        $studentGradeModel = new StudentGradeModel();
-
-        $studentSessionState = $studentSessionStateModel->where('student_id', $this->user['id'])->first();
-
-        // Check if we have an in-progress session
-        if ($studentSessionState && $studentSessionState['completed'] == 0) {
-            return redirect()->to('/home');
-        }
-
-        $currentTopic = null;
-
-        $studentGrade = $studentGradeModel->where('student_id', $this->user['id'])->first();
-
-        if ($studentGrade) {
-            $gradeRoute = $gradeRouteModel->where('grade_id', $studentGrade['grade_id'])->findAll();
-
-            if ($gradeRoute) {
-                $topicsIds = [];
-
-                foreach ($gradeRoute as $route) {
-                    if ($topicModel->find($route['topic_id'])) {
-                        $topicsIds[] = $route['topic_id'];
-                    }
-                }
-
-                foreach ($topicsIds as $topicId) {
-                    $studentProgressRecord = $studentProgressModel->where([
-                        'student_id' => $this->user['id'],
-                        'topic_id' => $topicId
-                    ])->first();
-
-                    if (!$studentProgressRecord) {
-                        $studentProgressModel->insert([
-                            'student_id' => $this->user['id'],
-                            'topic_id' => $topicId,
-                            'level' => 1,
-                            'completed' => 0
-                        ]);
-
-                        $currentTopic = $topicModel->find($topicId);
-
-                        if ($currentTopic) {
-                            break;
-                        }
-                    }
-                    else {
-                        if ($studentProgressRecord['completed'] == 0) {
-                            $currentTopic = $topicModel->find($topicId);
-
-                            if ($currentTopic) {
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        $monday = new DateTime();
-        if ($monday->format('N') != 1) { // 'N' = ISO day of week (1 = Monday, 7 = Sunday)
-            $monday->modify('last monday');
-        }
-        $lastMondayDate = $monday->format('Y-m-d');
-
-        $gradeWeeklyGoalModel = new GradeWeeklyGoalModel();
-        $studentWeeklyPointsModel = new StudentWeeklyPointsModel();
-
-        // Get the latest weekly goal
-        $weeklyGoal = $gradeWeeklyGoalModel->where([
-            'grade_id' => $studentGrade['grade_id'],
-            'week_start_date <= ' => $lastMondayDate
-        ])->orderBy('week_start_date', 'DESC')->first();
-
-        // Get the student's weekly points for the current week
-        $currentWeekPoints = $studentWeeklyPointsModel->where([
-            'student_id' => $this->user['id'],
-            'week_start_date' => $lastMondayDate
-        ])->selectSum('earned_points')->first()['earned_points'];
-
-        if ($currentWeekPoints === NULL) {
-            $currentWeekPoints = 0;
-        }
-
-        // Get the total points for the entire current year
-        $currentYearStartDate = new DateTime();
-        $currentYearStartDate->setDate($currentYearStartDate->format('Y'), 1, 1);
-        $sum = $studentWeeklyPointsModel->where([
-            'student_id' => $this->user['id'],
-            'week_start_date >= ' => $currentYearStartDate->format('Y-m-d'),
-            'week_start_date <= ' => $lastMondayDate
-        ])->selectSum('earned_points')->first();
-
-        $currentYearTotalPoints = 0;
-
-        if ($sum['earned_points'] !== NULL) {
-            $currentYearTotalPoints = $sum['earned_points'];
-        }
+        $topics = $topicModel->findAll();
 
         return view('page_selection', [
             'pageTitle' => 'Page Selection',
             'user' => $this->user,
-            'currentTopic' => $currentTopic,
-            'weeklyGoal' => $weeklyGoal,
-            'currentWeekPoints' => $currentWeekPoints,
-            'currentYearTotalPoints' => $currentYearTotalPoints
+            'topics' => $topics
         ]);
     }
 

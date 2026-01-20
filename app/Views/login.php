@@ -23,7 +23,7 @@
 <div class="login-page">
     <div class="login-card">
         <div class="d-flex justify-content-center">
-            <span style="font-size: 30px; font-weight: bold;">EOG Prep</span>
+            <img src="<?= base_url('public/assets/images/logo.jpg') ?>" alt="Logo" style="width: 150px; height: auto;">
         </div>
         <div class="login-form mt-4">
             <div class="mb-3">

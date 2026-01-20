@@ -96,7 +96,7 @@
         <div class="navbar-menu">
             <div class="navbar-brand-box">
                 <a href="<?= base_url('/admin') ?>" style="text-decoration: none;" class="logo">
-                    <span class="navbar-brand-text">EOG Prep</span>
+                    <img src="<?= base_url('public/assets/images/logo.jpg') ?>" alt="Logo" style="width: 122px; height: auto;">
                 </a>
             </div>
 

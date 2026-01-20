@@ -27,6 +27,43 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
+
+<div class="modal" id="startSessionModal">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Start Session</h5>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+			</div>
+			<div class="modal-body">
+				<div class="form-group">
+                    <label for="name">Select Topic</label>
+                    <select class="form-control" id="topic">
+                        <option value="">Select Topic</option>
+                        <?php foreach ($topics as $topic) : ?>
+                            <option value="<?= $topic['id'] ?>"><?= $topic['name'] ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="name">Select Difficulty Level</label>
+                    <select class="form-control" id="difficultyLevel">
+                        <option value="">Select Difficulty Level</option>
+                        <option value="1">Easy</option>
+                        <option value="2">Medium</option>
+                        <option value="3">Hard</option>
+                    </select>
+                </div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-sm btn-primary" id="startSessionBtn">Start Session</button>
+				<button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 <div class="container my-4">
     <div class="d-flex justify-content-between align-items-start">
         <div>
@@ -39,56 +76,12 @@
         </div>
     </div>
 
-    <?php
-    if ($weeklyGoal) {
-        ?>
-        <div class="row mt-3">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="row chart-row">
-
-                            <!-- Left section for Weekly Goal doughnut chart -->
-                            <div class="col-md-6">
-                                <h5 class="card-title text-center">My Weekly Goal</h5>
-                                <div class="d-flex justify-content-center">
-                                    <canvas id="weeklyGoalChart"></canvas>
-                                </div>
-                            </div>
-
-                            <!-- Right section for Cumulative Yearly Goal doughnut chart -->
-                            <div class="col-md-6">
-                                <h5 class="card-title text-center">My Yearly Goal</h5>
-                                <div class="d-flex justify-content-center">
-                                    <canvas id="yearlyGoalChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-    }
-    ?>
-
     <div class="mt-4">
 
         <h4>Quick Links</h4>
 
-        <?php
-        if ($currentTopic && !empty($currentTopic['tutorial_link'])) {
-            ?>
-            <div class="card mb-2">
-                <div class="card-body">
-                    <span><?= $currentTopic['name'] ?> &nbsp; <a target="_blank" href="<?= $currentTopic['tutorial_link'] ?>">Watch Tutorial</a></span>
-                </div>
-            </div>
-            <?php
-        }
-        ?>
         <div class="d-flex flex-wrap" style="gap: 10px;">
-            <a class="card page-card" style="padding: 40px 60px; cursor: pointer;" href="<?= base_url('home') ?>">
+            <a class="card page-card" data-toggle="modal" data-target="#startSessionModal" style="padding: 40px 60px; cursor: pointer;">
                 <div class="card-body">
                     <div class="d-flex flex-column align-items-center">
                         <img src="<?= base_url('public/assets/images/session.png') ?>" alt="Start Session" class="img-fluid" style="width: 130px;">
@@ -97,7 +90,7 @@
                 </div>
             </a>
 
-            <a class="card page-card" style="padding: 40px 60px; cursor: pointer;" href="<?= base_url('progress') ?>">
+            <!-- <a class="card page-card" style="padding: 40px 60px; cursor: pointer;" href="<?= base_url('progress') ?>">
                 <div class="card-body">
                     <div class="d-flex flex-column align-items-center">
                         <img src="<?= base_url('public/assets/images/progress.png') ?>" alt="View Progress" class="img-fluid" style="width: 130px;">
@@ -113,121 +106,30 @@
                         <h5 class="card-title">View History</h5>
                     </div>
                 </div>
-            </a>
+            </a> -->
         </div>
     </div>
 </div>
 <?= $this->endSection() ?>
 
 <?= $this->section('foot') ?>
-<?php
-if ($weeklyGoal) {
-    ?>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const earned = <?= $currentWeekPoints ?>;
-        const goal = <?= $weeklyGoal['goal_points'] ?>;
-        const percent = Math.round((earned / goal) * 100);
+<script>
+    $(() => {
+        $("#startSessionBtn").click(function() {
+            let topicId = $("#topic").val();
+            let difficultyLevel = $("#difficultyLevel").val();
 
-        const yearlyEarned = <?= $currentYearTotalPoints ?>;
-        const yearlyGoal = 3500;
-        const yearlyPercent = Math.round((yearlyEarned / yearlyGoal) * 100);
+            if (!topicId || !difficultyLevel) {
+                new Notify({
+                    title: 'Error',
+                    text: 'Please select a topic and difficulty level',
+                    status: 'error',
+                });
+                return;
+            }
 
-        const ctx = document.getElementById('weeklyGoalChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Earned Points', 'Remaining Points'],
-                datasets: [{
-                    data: [earned, goal - earned],
-                    backgroundColor: ['#4CAF50', '#e0e0e0'],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                cutout: '75%',
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return ` ${context.parsed}`;
-                            }
-                        }
-                    }
-                }
-            },
-            plugins: [
-                {
-                    id: 'centerText',
-                    beforeDraw(chart) {
-                        const {width} = chart;
-                        const {height} = chart;
-                        const ctx = chart.ctx;
-                        ctx.restore();
-
-                        const fontSize = (height / 160).toFixed(2);
-                        ctx.font = `${fontSize}em sans-serif`;
-                        ctx.textBaseline = "middle";
-
-                        const text = `${earned}/${goal}`;
-                        const textX = Math.round((width - ctx.measureText(text).width) / 2);
-                        const textY = (height / 2) + 15;
-
-                        ctx.fillText(text, textX, textY);
-                        ctx.save();
-                    }
-                }
-            ]
+            window.location.href = '<?= base_url('home') ?>?topic_id=' + topicId + '&difficulty_level=' + difficultyLevel;
         });
-
-        const yearlyCtx = document.getElementById('yearlyGoalChart').getContext('2d');
-        new Chart(yearlyCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Earned Points', 'Remaining Points'],
-                datasets: [{
-                    data: [yearlyEarned, yearlyGoal - yearlyEarned],
-                    backgroundColor: ['#4CAF50', '#e0e0e0'],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                cutout: '75%',
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return ` ${context.parsed}`;
-                            }
-                        }
-                    }
-                }
-            },
-            plugins: [
-                {
-                    id: 'centerText',
-                    beforeDraw(chart) {
-                        const {width} = chart;
-                        const {height} = chart;
-                        const ctx = chart.ctx;
-                        ctx.restore();
-
-                        const fontSize = (height / 160).toFixed(2);
-                        ctx.font = `${fontSize}em sans-serif`;
-                        ctx.textBaseline = "middle";
-
-                        const text = `${yearlyEarned}/${yearlyGoal}`;
-                        const textX = Math.round((width - ctx.measureText(text).width) / 2);
-                        const textY = (height / 2) + 15;
-
-                        ctx.fillText(text, textX, textY);
-                        ctx.save();
-                    }
-                }
-            ]
-        });
-    </script>
-    <?php
-}
-?>
+    });
+</script>
 <?= $this->endSection() ?>

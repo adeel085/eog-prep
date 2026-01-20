@@ -58,8 +58,7 @@
             <nav class="navbar navbar-expand-md bg-light navbar-light">
                 <!-- Brand -->
                 <a class="navbar-brand" href="<?= base_url('/') ?>">
-                    <!-- <img src="<?= base_url('public/assets/images/Transparent_Logo.png') ?>" alt="Logo" style="width: 100px; max-width: 100%;"> -->
-                    <span class="navbar-brand-text">EOG Prep</span>
+                    <img src="<?= base_url('public/assets/images/logo.jpg') ?>" alt="Logo" style="width: 100px; height: auto;">
                 </a>
 
                 <!-- Toggler/collapsibe Button -->

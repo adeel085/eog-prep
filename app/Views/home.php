@@ -74,35 +74,25 @@
 <?= $this->section('foot') ?>
 <script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML"></script>
 <script>
+    let questions = <?= json_encode($questions) ?>;
+    let currentQuestionIndex = -1;
+
     $(document).ready(async function() {
 
-        let remainingSeconds = <?= $remainingSeconds ?>;
-
-        let endTime = Date.now() + (remainingSeconds * 1000); // Calculate end timestamp
-
-        let checkInterval = setInterval(() => {
-            let currentTime = Date.now(); // Get current time
-
-            if (currentTime >= endTime) {
-                clearInterval(checkInterval); // Stop checking
-                window.location.href = window.baseUrl + 'evaluation'; // Redirect
-            }
-        }, 1000);
-
-        await showNextQuestion();
+        showNextQuestion();
 
         $("#submitBtn").click(async function() {
             
             let questionType = $("#questionType").val();
             let questionId = $("#questionId").val();
             let selectedAnswer = undefined;
-            let showingSolution = false;
 
             if (questionType == 'mcq') {
                 selectedAnswer = $('input[name="answer"]:checked').val();
             }
             else {
                 selectedAnswer = $('.question-item').find('.text-answer').val().trim();
+
             }
 
             if (selectedAnswer == undefined || selectedAnswer == '') {
@@ -116,104 +106,34 @@
                 return;
             }
 
-            try {
+            let correct = false;
 
-                let formData = new FormData();
-                formData.append('question_id', questionId);
-                formData.append('answer', selectedAnswer);
+            questions[currentQuestionIndex].answers.forEach(answer => {
+                if (answer.is_correct == 1 && (questionType == 'mcq' ? answer.answer == base64DecodeUnicode(selectedAnswer) : answer.answer == selectedAnswer)) {
+                    correct = true;
+                }
+            });
 
-                // Show loader in submit button
-                $(this).attr('data-disabled', "true").attr('data-content', $(this).html()).html('<i class="fa fa-spinner fa-spin"></i>').css('pointer-events', 'none');
-
-                const res = await ajaxCall({
-                    url: baseUrl + 'submit-answer',
-                    data: formData,
-                    csrfHeader: '<?= csrf_header() ?>',
-                    csrfHash: '<?= csrf_hash() ?>'
+            if (correct) {
+                new Notify({
+                    title: 'Success',
+                    text: 'Correct answer',
+                    status: 'success',
+                    autoclose: true,
+                    autotimeout: 3000
                 });
-
-                if (res.status == 'success') {
-
-                    if (res.is_correct) {
-                        new Notify({
-                            title: 'Info',
-                            text: 'Correct Answer',
-                            status: 'success',
-                            autoclose: true,
-                            autotimeout: 3000
-                        });
-
-                        await showNextQuestion();
-                    }
-                    else {
-                        new Notify({
-                            title: 'Info',
-                            text: 'Incorrect Answer',
-                            status: 'error',
-                            autoclose: true,
-                            autotimeout: 3000
-                        });
-
-                        if (res.solution == "") {
-                            await showNextQuestion();
-                        }
-                        else {
-                            $('.question-solution').show();
-                            $('.question-solution .solution-content').html(res.solution);
-                            showingSolution = true;
-
-                            // Force MathJax to re-render the newly loaded content
-                            MathJax.Hub.Queue([
-                                "Typeset",
-                                MathJax.Hub,
-                                $('.question-solution .solution-content').get(0),
-                            ]);
-                        }
-                    }
-                }
-                else {
-                    new Notify({
-                        title: 'Error',
-                        text: res.message || 'Something went wrong',
-                        status: 'error',
-                        autoclose: true,
-                        autotimeout: 3000
-                    });
-
-                    if (res.message == 'session_completed') {
-                        window.location.reload();
-                    }
-                }
             }
-            catch (err) {
-
+            else {
                 new Notify({
                     title: 'Error',
-                    text: err.responseJSON.message || 'Something went wrong',
+                    text: 'Incorrect answer',
                     status: 'error',
                     autoclose: true,
                     autotimeout: 3000
                 });
-
-                if (err.status == 401) {
-                    alert("You have been logged out.");
-                    window.location.reload();
-                }
             }
 
-            // Reset submit button
-            $('#submitBtn').html($(this).attr('data-content')).css('pointer-events', 'auto').removeAttr('data-disabled');
-
-            if (showingSolution) {
-                $('#submitBtn').css({
-                    'pointer-events': 'none',
-                    'opacity': 0.5
-                }).attr('data-disabled', "true");
-                
-                $('.question-item').css({
-                    'pointer-events': 'none',
-                });
-            }
+            showNextQuestion();
         });
 
         $(document).on('keyup', '.text-answer', function() {
@@ -227,11 +147,13 @@
         });
 
         $('#nextQuestionBtn').click(async function() {
-            await showNextQuestion();
+            showNextQuestion();
         });
     });
 
-    async function showNextQuestion() {
+    function showNextQuestion() {
+
+        currentQuestionIndex++;
 
         $('.question-solution').hide();
         $('.question-solution .solution-content').html('');
@@ -243,30 +165,23 @@
 
         $('.question-item').hide();
 
-        let res = await getQuestion();
+        let question = getQuestion();
 
-        if (res.status == 'success') {
-
-            if (res.question === null) {
-                
-                $("#questionsWrapper").html(`<span>No more questions found in your current topic and current level</span>`);
-
-                $(".question-center .question-footer").remove();
-                $(".question-center .question-solution").remove();
-
-                return;
-            }
-
-            renderQuestion(res.question);
+        if (question == null) {
+            new Notify({
+                title: 'Info',
+                text: 'No more questions found in your current topic and current level',
+                status: 'info',
+                autoclose: true,
+                autotimeout: 3000
+            });
+            setTimeout(() => {
+                window.location.href = baseUrl + '/page-selection';
+            }, 3000);
+            return;
         }
-        else {
-            if (res.message == 'session_completed') {
-                window.location.reload();
-            }
-            else {
-                reject(res.message);
-            }
-        }
+
+        renderQuestion(question);
 
         $('#submitBtn').css({
             'pointer-events': 'auto',
@@ -311,19 +226,12 @@
         ]);
     }
 
-    async function getQuestion() {
-        return new Promise((resolve, reject) => {
-            $.ajax({
-                url: '<?= base_url('/get-question') ?>',
-                method: 'POST',
-                success: function(response) {
-                    resolve(response);
-                },
-                error: function(xhr, status, error) {
-                    reject(error);
-                }
-            });
-        });
+    function getQuestion() {
+        if (currentQuestionIndex >= questions.length) {
+            return null;
+        }
+
+        return questions[currentQuestionIndex];
     }
 
     function base64EncodeUnicode(str) {
