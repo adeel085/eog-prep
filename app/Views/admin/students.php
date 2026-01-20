@@ -97,7 +97,6 @@
                                 <th>Name</th>
                                 <th>Username</th>
                                 <th>Email</th>
-                                <th>Grade</th>
                                 <th>Class</th>
                                 <th></th>
                             </tr>
@@ -108,7 +107,6 @@
                                     <td><?= $student['full_name'] ?></td>
                                     <td><?= $student['username'] ?></td>
                                     <td><?= $student['email'] ?></td>
-                                    <td><?= $student['grade']['name'] ?></td>
                                     <td><?= isset($student['class']) ? $student['class']['name'] : '' ?></td>
                                     <td>
                                         <div class="d-flex justify-content-end table-action-btn" style="gap: 10px;">

@@ -50,17 +50,6 @@
 
                     <div class="col-sm-6">
                         <div class="form-group">
-                            <label for="grade">Grade <span class="text-danger">*</span></label>
-                            <select class="form-control" id="grade">
-                                <?php foreach ($grades as $grade) : ?>
-                                    <option value="<?= $grade['id'] ?>"><?= $grade['name'] ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-6">
-                        <div class="form-group">
                             <label for="class">Class</label>
                             <select class="form-control" id="class">
                                 <option value="">Select Class</option>
@@ -98,11 +87,10 @@
             let username = $('#username').val().trim();
             let email = $('#email').val().trim();
             let password = $('#password').val().trim();
-            let grade = $('#grade').val();
             let classId = $('#class').val();
             let parentEmails = $('#parentEmails').val().trim();
 
-            if (!name || !username || !email || !password || !grade) {
+            if (!name || !username || !email || !password) {
                 new Notify({
                     status: 'error',
                     title: 'Error',
@@ -119,7 +107,6 @@
                 formData.append('username', username);
                 formData.append('email', email);
                 formData.append('password', password);
-                formData.append('grade', grade);
                 formData.append('classId', classId);
                 formData.append('parentEmails', parentEmails);
 

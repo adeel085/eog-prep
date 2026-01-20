@@ -5,8 +5,6 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use App\Models\ClassModel;
 use App\Models\UserModel;
-use App\Models\GradeModel;
-use App\Models\StudentGradeModel;
 
 class AdminClasses extends BaseController
 {
@@ -44,8 +42,6 @@ class AdminClasses extends BaseController
 
         $classModel = new ClassModel();
         $userModel = new UserModel();
-        $gradeModel = new GradeModel();
-        $studentGradeModel = new StudentGradeModel();
 
         $class = $classModel->find($id);
 
@@ -62,13 +58,6 @@ class AdminClasses extends BaseController
             if ($studentClassId == $id) {
                 $filteredStudents[] = $student;
             }
-        }
-
-        foreach ($filteredStudents as &$student) {
-            $studentGrade = $studentGradeModel->where('student_id', $student['id'])->first();
-
-            $grade = $gradeModel->find($studentGrade['grade_id']);
-            $student['grade'] = $grade;
         }
 
         return view('admin/classes_students', [

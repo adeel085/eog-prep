@@ -88,7 +88,7 @@
             $(this).attr('data-content', $(this).html()).html('<i class="fa fa-spinner fa-spin"></i>').css('pointer-events', 'none');
 
             const res = await ajaxCall({
-                url: baseUrl + '/admin/login',
+                url: baseUrl + 'admin/login',
                 data: formData,
                 csrfHeader: '<?= csrf_header() ?>',
                 csrfHash: '<?= csrf_hash() ?>'

@@ -3,8 +3,6 @@
 namespace App\Controllers;
 
 use App\Models\UserModel;
-use App\Models\StudentGradeModel;
-use App\Models\GradeModel;
 use App\Models\ClassModel;
 use App\Models\UserSignupModel;
 
@@ -21,12 +19,8 @@ class Signup extends BaseController
             }
         }
 
-        $gradeModel = new GradeModel();
-        $grades = $gradeModel->findAll();
-
         return view('signup', [
-            'pageTitle' => 'Signup',
-            'grades' => $grades
+            'pageTitle' => 'Signup'
         ]);
     }
 
@@ -51,10 +45,8 @@ class Signup extends BaseController
         $username = $this->request->getPost('username');
         $email = $this->request->getPost('email');
         $password = $this->request->getPost('password');
-        $grade_id = $this->request->getPost('grade_id');
 
         $userModel = new UserModel();
-        $studentGradeModel = new StudentGradeModel();
 
         $user = $userModel->where([
             'username' => $username,
@@ -77,11 +69,6 @@ class Signup extends BaseController
         $class = $classModel->first();
 
         $userModel->insertUserMeta('studentClassId', $class['id'], $userId);
-
-        $studentGradeModel->insert([
-            'student_id' => $userId,
-            'grade_id' => $grade_id
-        ]);
 
         $userSignupModel = new UserSignupModel();
         $userSignupModel->insert([

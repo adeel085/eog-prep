@@ -115,15 +115,6 @@
                         </div>
                     </li>
 
-                    <li>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <a href="<?= base_url('/admin/grades') ?>">
-                                <i class="fa fa-graduation-cap navbar-icon"></i>
-                                <span>Grades</span>
-                            </a>
-                        </div>
-                    </li>
-
                     <?php
                     if ($user['user_type'] == 'admin') {
                         ?>
@@ -411,42 +402,6 @@
         new Notify({
             title: 'Welcome',
             text: 'You are logged in',
-            status: 'success',
-            autoclose: true,
-            autotimeout: 3000
-        });
-    </script>
-    <?php endif; ?>
-
-    <?php if (isset($flashData['status']) && $flashData['status'] == 'grade_created'): ?>
-    <script>
-        new Notify({
-            title: 'Success',
-            text: 'Grade created successfully',
-            status: 'success',
-            autoclose: true,
-            autotimeout: 3000
-        });
-    </script>
-    <?php endif; ?>
-
-    <?php if (isset($flashData['status']) && $flashData['status'] == 'grade_updated'): ?>
-    <script>
-        new Notify({
-            title: 'Success',
-            text: 'Grade updated successfully',
-            status: 'success',
-            autoclose: true,
-            autotimeout: 3000
-        });
-    </script>
-    <?php endif; ?>
-
-    <?php if (isset($flashData['status']) && $flashData['status'] == 'grade_deleted'): ?>
-    <script>
-        new Notify({
-            title: 'Success',
-            text: 'Grade deleted successfully',
             status: 'success',
             autoclose: true,
             autotimeout: 3000

@@ -3,20 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\UserModel;
-use App\Models\GradeModel;
-use App\Models\StudentGradeModel;
 use App\Models\ClassModel;
-use App\Models\StudentProgressModel;
-use App\Models\StudentSessionStateModel;
-use App\Models\StudentSessionQuestionModel;
-use App\Models\StudentQuestionsResultsModel;
-use App\Models\StudentSessionModel;
-use App\Models\StudentWeeklyPointsModel;
-use App\Models\TopicModel;
-use App\Models\QuestionModel;
-use App\Models\QuestionAnswersModel;
-use App\Models\GradeWeeklyGoalModel;
-use App\Models\UserLoginSessionModel;
 
 use CodeIgniter\Exceptions\PageNotFoundException;
 
@@ -38,11 +25,6 @@ class AdminStudents extends BaseController
             $search = NULL;
         }
 
-        $gradeModel = new GradeModel();
-        $studentGradeModel = new StudentGradeModel();
-
-        $grades = $gradeModel->where('owner_id', $this->user['id'])->findAll();
-
         $userModel = new UserModel();
         $classModel = new ClassModel();
         $students = $userModel->filterByStudentOf($this->user['id']);
@@ -54,10 +36,6 @@ class AdminStudents extends BaseController
         $students = $students->paginate(10);
 
         foreach ($students as &$student) {
-            $studentGrade = $studentGradeModel->where('student_id', $student['id'])->first();
-
-            $grade = $gradeModel->find($studentGrade['grade_id']);
-            $student['grade'] = $grade;
 
             $classId = $userModel->getUserMeta('studentClassId', $student['id'], true);
 
@@ -72,7 +50,6 @@ class AdminStudents extends BaseController
 
         return view('admin/students', [
             'pageTitle' => 'Students',
-            'grades' => $grades,
             'students' => $students,
             'pager' => $userModel->pager,
             'flashData' => $this->session->getFlashdata(),
@@ -91,15 +68,11 @@ class AdminStudents extends BaseController
             return redirect()->to(base_url('/'));
         }
 
-        $gradeModel = new GradeModel();
-        $grades = $gradeModel->where('owner_id', $this->user['id'])->findAll();
-
         $classModel = new ClassModel();
         $classes = $classModel->where('owner_id', $this->user['id'])->findAll();
         
         return view('admin/students_new', [
             'pageTitle' => 'New Student',
-            'grades' => $grades,
             'classes' => $classes,
             'flashData' => $this->session->getFlashdata(),
             'user' => $this->user
@@ -120,17 +93,14 @@ class AdminStudents extends BaseController
         $username = $this->request->getPost('username');
         $email = $this->request->getPost('email');
         $password = $this->request->getPost('password');
-        $gradeId = $this->request->getPost('grade');
         $classId = $this->request->getPost('classId');
         $parentEmails = $this->request->getPost('parentEmails');
 
-        if (!$name || !$username || !$email || !$password || !$gradeId) {
+        if (!$name || !$username || !$email || !$password) {
             return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Bad Request']);
         }
 
         $userModel = new UserModel();
-        $studentGradeModel = new StudentGradeModel();
-        $gradeModel = new GradeModel();
 
         $user = $userModel->where('username', $username)->first();
 
@@ -155,17 +125,6 @@ class AdminStudents extends BaseController
         if (!empty($parentEmails)) {
             $userModel->insertUserMeta('parentEmails', $parentEmails, $userId);
         }
-
-        $grade = $gradeModel->find($gradeId);
-
-        if (!$grade) {
-            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Bad Request']);
-        }
-
-        $studentGradeModel->insert([
-            'student_id' => $userId,
-            'grade_id' => $gradeId
-        ]);
 
         $this->session->setFlashdata('status', 'student_created');
 
@@ -211,36 +170,12 @@ class AdminStudents extends BaseController
         }
 
         $userModel = new UserModel();
-        $gradeModel = new GradeModel();
-        $studentGradeModel = new StudentGradeModel();
         $classModel = new ClassModel();
 
         foreach ($data as $student) {
             $user = $userModel->where('username', $student['username'])->first();
 
             if ($user) {
-                continue;
-            }
-
-            $studentGrade = str_replace('\'', '', $student['grade']);
-            $studentGrade = str_replace('"', '', $studentGrade);
-
-            // Check if grade starts with a '+' or '-' and there is no space after it, then add a space after it
-            if (substr($studentGrade, 0, 1) == '+' || substr($studentGrade, 0, 1) == '-') {
-                // Check if there is a space after the '+' or '-'
-                if (substr($studentGrade, 1, 1) != ' ') {
-                    $studentGrade = substr($studentGrade, 0, 1) . ' ' . substr($studentGrade, 1);
-                }
-            }
-
-            $grade = $gradeModel->where('name', $studentGrade)->first();
-
-            if (!$grade) {
-                // Get first grade from database
-                $grade = $gradeModel->first();
-            }
-
-            if (!$grade) {
                 continue;
             }
 
@@ -263,11 +198,6 @@ class AdminStudents extends BaseController
             }
 
             $userModel->insertUserMeta('studentOf', $this->user['id'], $studentId);
-
-            $studentGradeModel->insert([
-                'student_id' => $studentId,
-                'grade_id' => $grade['id']
-            ]);
         }
 
         // Now delete the file
@@ -289,8 +219,6 @@ class AdminStudents extends BaseController
         }
 
         $userModel = new UserModel();
-        $gradeModel = new GradeModel();
-        $studentGradeModel = new StudentGradeModel();
         $classModel = new ClassModel();
 
         $student = $userModel->find($id);
@@ -313,16 +241,11 @@ class AdminStudents extends BaseController
 
         $student['parent_emails'] = $userModel->getUserMeta('parentEmails', $student['id'], true) ?? '';
 
-        $student['grade'] = $gradeModel->find($studentGradeModel->where('student_id', $student['id'])->first()['grade_id']);
-
-        $grades = $gradeModel->where('owner_id', $this->user['id'])->findAll();
-
         $classes = $classModel->where('owner_id', $this->user['id'])->findAll();
 
         return view('admin/students_edit', [
             'pageTitle' => 'Edit Student',
             'student' => $student,
-            'grades' => $grades,
             'classes' => $classes,
             'flashData' => $this->session->getFlashdata(),
             'user' => $this->user
@@ -370,17 +293,14 @@ class AdminStudents extends BaseController
         $username = $this->request->getPost('username');
         $email = $this->request->getPost('email');
         $password = $this->request->getPost('password');
-        $gradeId = $this->request->getPost('grade');
         $classId = $this->request->getPost('classId');
         $parentEmails = $this->request->getPost('parentEmails');
 
-        if (!$id || !$name || !$username || !$email || !$gradeId) {
+        if (!$id || !$name || !$username || !$email) {
             return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Bad Request']);
         }
 
         $userModel = new UserModel();
-        $studentGradeModel = new StudentGradeModel();
-        $gradeModel = new GradeModel();
 
         $user = $userModel->where('username', $username)->first();
 
@@ -400,25 +320,6 @@ class AdminStudents extends BaseController
             'email' => $email,
             'password' => $password ? password_hash($password, PASSWORD_DEFAULT) : $userModel->find($id)['password']
         ]);
-
-        $grade = $gradeModel->find($gradeId);
-
-        if (!$grade) {
-            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Bad Request']);
-        }
-
-        $studentOldGrade = $studentGradeModel->where('student_id', $id)->first();
-
-        $updated = $studentGradeModel->set([
-            'grade_id' => $gradeId
-        ])->where('student_id', $id)->update();
-
-        if ($updated && $studentOldGrade['grade_id'] != $gradeId) {
-            
-            // Reset the progress and session records for the student
-            $studentQuestionsResultsModel = new StudentQuestionsResultsModel();
-            $studentQuestionsResultsModel->where('student_id', $id)->delete();
-        }
 
         if ($classId) {
             $userModel->updateUserMeta('studentClassId', $classId, $id, true);
@@ -467,9 +368,7 @@ class AdminStudents extends BaseController
         }
 
         $userModel = new UserModel();
-        $studentGradeModel = new StudentGradeModel();
 
-        $studentGradeModel->where('student_id', $id)->delete();
         $userModel->delete($id);
 
         $userModel->deleteAllUserMeta($id);

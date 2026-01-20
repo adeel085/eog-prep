@@ -27,7 +27,6 @@
                                 <th>Name</th>
                                 <th>Username</th>
                                 <th>Email</th>
-                                <th>Grade</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -37,7 +36,6 @@
                                     <td><?= $student['full_name'] ?></td>
                                     <td><?= $student['username'] ?></td>
                                     <td><?= $student['email'] ?></td>
-                                    <td><?= $student['grade']['grade_level'] ?></td>
                                     <td>
                                         <div class="d-flex justify-content-end table-action-btn" style="gap: 10px;">
                                             <a href="<?= base_url('/admin/students/reports/' . $student['id']) ?>" class="table-action-btn" data-toggle="tooltip" title="Reports">

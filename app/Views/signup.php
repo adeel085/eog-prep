@@ -38,14 +38,6 @@
             <div class="mb-3">
                 <input type="password" class="form-control" placeholder="Password" id="password" />
             </div>
-            <div class="mb-3">
-                <select class="form-control" id="grade_id">
-                    <option value="">Select Grade</option>
-                    <?php foreach ($grades as $grade) : ?>
-                        <option value="<?= $grade['id'] ?>"><?= $grade['grade_level'] ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
             <div>
                 <button class="btn btn-primary w-100" id="signupBtn">Signup</button>
             </div>
@@ -73,9 +65,8 @@
             const username = $('#username').val();
             const email = $('#email').val();
             const password = $('#password').val();
-            const grade_id = $('#grade_id').val();
 
-            if (full_name == '' || username == '' || email == '' || password == '' || grade_id == '') {
+            if (full_name == '' || username == '' || email == '' || password == '') {
                 new Notify({
                     title: 'Error',
                     text: 'Please enter your full name, username, email and password',
@@ -93,7 +84,6 @@
                 formData.append('username', username);
                 formData.append('email', email);
                 formData.append('password', password);
-                formData.append('grade_id', grade_id);
                 
                 // Show loader in login button
                 $(this).attr('data-content', $(this).html()).html('<i class="fa fa-spinner fa-spin"></i>').css('pointer-events', 'none');

@@ -6,8 +6,6 @@ use App\Controllers\BaseController;
 use App\Models\TopicModel;
 use App\Models\UserModel;
 use App\Models\ClassModel;
-use App\Models\StudentGradeModel;
-use App\Models\GradeModel;
 
 class AdminDashboard extends BaseController
 {
@@ -23,9 +21,6 @@ class AdminDashboard extends BaseController
 
         $classModel = new ClassModel();
         $userModel = new UserModel();
-        $studentGradeModel = new StudentGradeModel();
-        $gradeModel = new GradeModel();
-        $topicModel = new TopicModel();
 
         $classes = $classModel->where('owner_id', $this->user['id'])->findAll();
 
@@ -37,13 +32,6 @@ class AdminDashboard extends BaseController
 
         foreach ($students as &$student) {
             $classId = $userModel->getUserMeta("studentClassId", $student['id'], true);
-
-            // Get student's grade
-            $studentGrade = $studentGradeModel->where('student_id', $student['id'])->first();
-
-            if ($studentGrade) {
-                $student['grade'] = $gradeModel->where('id', $studentGrade['grade_id'])->first();
-            }
 
             foreach ($classes as &$class) {
                 if ($class['id'] == $classId) {

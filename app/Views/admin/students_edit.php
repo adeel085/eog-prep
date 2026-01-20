@@ -50,17 +50,6 @@
 
                     <div class="col-sm-6">
                         <div class="form-group">
-                            <label for="grade">Grade <span class="text-danger">*</span></label>
-                            <select class="form-control" id="grade">
-                                <?php foreach ($grades as $grade) : ?>
-                                    <option value="<?= $grade['id'] ?>" <?= $student['grade']['id'] == $grade['id'] ? 'selected' : '' ?>><?= $grade['name'] ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-6">
-                        <div class="form-group">
                             <label for="class">Class</label>
                             <select class="form-control" id="class">
                                 <option value="">Select Class</option>
@@ -95,8 +84,6 @@
 <script>
     $(() => {
 
-        let studentGradeId = <?= $student['grade']['id'] ?>;
-
         $('#saveBtn').click(async function(e) {
             
             let id = $('#id').val();
@@ -104,11 +91,10 @@
             let username = $('#username').val().trim();
             let email = $('#email').val().trim();
             let password = $('#password').val().trim();
-            let grade = $('#grade').val();
             let classId = $('#class').val();
             let parentEmails = $('#parentEmails').val().trim();
 
-            if (!name || !username || !email || !grade) {
+            if (!name || !username || !email) {
                 new Notify({
                     title: 'Error',
                     text: 'Please fill all the required (*) fields',
@@ -116,10 +102,6 @@
                     autoclose: true,
                     autotimeout: 3000
                 });
-                return;
-            }
-
-            if (studentGradeId != grade && !confirm('Are you sure you want to change the grade of this student?')) {
                 return;
             }
 
@@ -131,7 +113,6 @@
                 formData.append('username', username);
                 formData.append('email', email);
                 formData.append('password', password);
-                formData.append('grade', grade);
                 formData.append('classId', classId);
                 formData.append('parentEmails', parentEmails);
                 

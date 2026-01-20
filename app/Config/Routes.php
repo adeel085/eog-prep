@@ -22,9 +22,6 @@ $routes->get('/admin/teachers', 'AdminTeachers::index');
 $routes->get('/admin/teachers/new', 'AdminTeachers::newPage');
 $routes->get('/admin/teachers/edit/(:any)', 'AdminTeachers::editPage/$1');
 
-$routes->get('/admin/grades', 'AdminGrades::index');
-$routes->get('/admin/grades/setRoute/(:any)', 'AdminGrades::setRoutePage/$1');
-
 $routes->get('/admin/classes', 'AdminClasses::index');
 $routes->get('/admin/classes/(:any)/students', 'AdminClasses::studentsPage/$1');
 
@@ -56,10 +53,6 @@ $routes->get('/cron/weekly-points-reminder-email', 'CronController::weeklyPoints
 $routes->get('/cron/send-monday-missing-questions-report-to-parents', 'CronController::sendMondayMissingQuestionsReportToParents');
 
 $routes->post('/admin/login', 'AdminLogin::login');
-$routes->post('/admin/grades/saveNew', 'AdminGrades::saveNew');
-$routes->post('/admin/grades/update', 'AdminGrades::update');
-$routes->post('/admin/grades/delete', 'AdminGrades::delete');
-$routes->post('/admin/grades/updateTopics', 'AdminGrades::updateTopics');
 $routes->post('/admin/students/saveNew', 'AdminStudents::saveNew');
 $routes->post('/admin/students/update', 'AdminStudents::update');
 $routes->post('/admin/students/delete', 'AdminStudents::delete');
@@ -69,7 +62,6 @@ $routes->post('/admin/students/import-csv', 'AdminStudents::importCsv');
 $routes->post('/admin/topics/saveNew', 'AdminTopics::saveNew');
 $routes->post('/admin/topics/update', 'AdminTopics::update');
 $routes->post('/admin/topics/delete', 'AdminTopics::delete');
-$routes->post('/admin/grades/updateRoute', 'AdminGrades::updateRoute');
 $routes->post('/admin/questions/saveNew', 'AdminQuestions::saveNew');
 $routes->post('/admin/questions/update', 'AdminQuestions::update');
 $routes->post('/admin/questions/delete', 'AdminQuestions::delete');
