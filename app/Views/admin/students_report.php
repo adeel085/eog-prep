@@ -2,39 +2,80 @@
 
 <?= $this->section('head') ?>
 <style>
-    .accordion-item {
-        border: 1px solid #c0c0c0;
+    .level-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
     }
-    .accordion-header {
-        padding: 10px;
+
+    .level-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
     }
-    .accordion-body {
-        padding: 10px;
-        padding-left: 45px;
-        background-color: #f0f0f0;
+
+    .level-card h6 {
+        margin-bottom: 10px;
+        color: #495057;
+        font-weight: 600;
+    }
+
+    .score-display .avg-score {
+        font-size: 24px;
+        font-weight: bold;
+        color: #007bff;
+        margin-bottom: 5px;
+    }
+
+    .score-display .score-details {
+        color: #6c757d;
+    }
+
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+    }
+
+    .session-item {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+    }
+
+    .session-item:last-child {
+        border-bottom: none !important;
+    }
+
+    .badge {
+        font-size: 0.875rem;
+        padding: 6px 10px;
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-bottom: none;
+    }
+
+    .card-header h5, .card-header h6 {
+        color: white;
+        margin: 0;
+    }
+
+    .toggle-sessions {
+        transition: all 0.3s ease;
+    }
+
+    .toggle-sessions:hover {
+        transform: scale(1.05);
+    }
+
+    .topic-chart {
         position: relative;
-    }
-    .accordion-body::before {
-        content: '';
-        position: absolute;
-        left: 25px;
-        top: 10px;
-        width: 3px;
-        height: calc(100% - 20px);
-        background-color: #9a9a9a;
-        border-radius: 12px;
-    }
-    #weeklyGoalChart, #yearlyGoalChart {
-        width: 300px !important;
-        height: 300px !important;
-    }
-    @media (max-width: 767px) {
-        .chart-row {
-            gap: 40px;
-        }
-        .page-card {
-            width: 100%;
-        }
+        height: 150px;
     }
 </style>
 <?= $this->endSection() ?>
@@ -57,146 +98,40 @@
 <div class="row">
     <div class="col-12">
         <div class="card">
-            <div class="card-body">
-                <p class="text-muted mb-4">Progress Report</p>
-
-                <!-- Date filter -->
-                <div class="d-flex flex-wrap mb-4" style="column-gap: 20px; row-gap: 10px;">
-                    <div class="d-flex align-items-center" style="gap: 10px;">
-                        <label class="mb-0" for="startDateProgress" style="white-space: nowrap;">Start Date</label>
-                        <input type="date" class="form-control form-control-sm" id="startDateProgress" value="<?= $startDateProgress ?>">
-                    </div>
-                    <div class="d-flex align-items-center" style="gap: 10px;">
-                        <label class="mb-0" for="endDateProgress" style="white-space: nowrap;">End Date</label>
-                        <input type="date" class="form-control form-control-sm" id="endDateProgress" value="<?= $endDateProgress ?>">
-                    </div>
-
-                    <div>
-                        <button class="btn btn-primary btn-sm" id="progressFilterBtn">Filter</button>
-                        <?php if ($filteredProgress) : ?>
-                            <a class="btn btn-secondary btn-sm" href="<?= base_url('/admin/students/reports/' . $student['id']) ?>">Reset Filter</a>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-                <div class="accordion-item">
-                    <div class="accordion-header d-flex justify-content-between" id="heading-<?= $student['id'] ?>">
-                        <span><?= $student['username'] ?></span>
-                        <span class="text-muted">Grade <?= $student['grade']['grade_level'] ?></span>
-                    </div>
-                    <div class="accordion-body">
-                        <?php
-                        foreach ($student['progress'] as $progress) {
-                            if (!isset($progress['topic'])) {
-                                continue;
-                            }
-                            ?>
-                            <div class="progress-item">
-                                <span><?= $progress['topic']['name'] ?> &nbsp; &nbsp; Level <?= $progress['level'] ?></span>
-                                &nbsp; &nbsp;
-                                <!-- Complete or In Progress badge -->
-                                <span class="badge <?= $progress['completed'] ? 'bg-success' : 'bg-info' ?>" style="color: #fff;">
-                                    <?= $progress['completed'] ? 'Completed' : 'In Progress' ?>
-                                </span>
-                            </div>
-                            <?php
-                        }
-                        if (count($student['progress']) == 0) {
-                            ?>
-                            <div class="text-muted">No progress <?= $filteredProgress ? 'in the selected period' : '' ?></div>
-                            <?php
-                        }
-                        ?>
-                    </div>
-                </div>
+            <div class="card-header">
+                <h5 class="card-title mb-0">Performance Overview</h5>
             </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-12">
-        <div class="card">
             <div class="card-body">
-                <p class="text-muted mb-4">Missed Questions <?= $isLast7Days ? '(last 7 days)' : '' ?></p>
-
-                <!-- Date filter -->
-                <div class="d-flex flex-wrap" style="column-gap: 20px; row-gap: 10px;">
-                    <div class="d-flex align-items-center" style="gap: 10px;">
-                        <label class="mb-0" for="startDate" style="white-space: nowrap;">Start Date</label>
-                        <input type="date" class="form-control form-control-sm" id="startDate" value="<?= $startDate ?>">
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h3 class="text-primary" id="totalTopics">0</h3>
+                            <p class="text-muted mb-0">Topics Attempted</p>
+                        </div>
                     </div>
-                    <div class="d-flex align-items-center" style="gap: 10px;">
-                        <label class="mb-0" for="endDate" style="white-space: nowrap;">End Date</label>
-                        <input type="date" class="form-control form-control-sm" id="endDate" value="<?= $endDate ?>">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h3 class="text-success" id="averageScore">0%</h3>
+                            <p class="text-muted mb-0">Average Score</p>
+                        </div>
                     </div>
-                    <div>
-                        <button class="btn btn-primary btn-sm mr-1" id="missedQuestionsFilterBtn">Filter</button>
-                        <button class="btn btn-primary btn-sm" id="sendMissedQuestionsEmail">
-                            <i class="fa fa-envelope"></i> Send Email
-                        </button>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h3 class="text-info" id="totalSessions">0</h3>
+                            <p class="text-muted mb-0">Total Sessions</p>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mt-4">
-                    <?php foreach ($missingQuestions as $question) : ?>
-                        <div class="card mb-3">
+                <!-- Overall Performance Chart -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="card-title mb-0">Overall Performance by Level</h6>
+                            </div>
                             <div class="card-body">
-                                <h5 class="card-title"><?= $question['question_html'] ?></h5>
-                                <?php
-                                    foreach ($question['student_answers'] as $answer) {
-                                        ?>
-                                        <div class="d-flex align-items-center mb-1 answer-item" style="gap: 10px;">
-                                            <span class="text-danger">❌</span>
-                                            <div style="display: inline-block;margin: 0;background: #dcdcdc;padding: 1px;white-space: pre;"><?= $answer['student_answer'] ?></div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <span style="font-size: 15px;" class="text-muted">[<?= date('M d, Y h:i A', strtotime($answer['created_at'])) ?>]</span>
-                                        </div>
-                                        <?php
-                                    }
-                                ?>
-                                <div class="d-flex align-items-center mb-3 answer-item" style="gap: 10px;">
-                                    <span class="text-success">✅</span>
-                                    <div style="display: inline-block;margin: 0;background: #dcdcdc;padding: 1px;white-space: pre;"><?= $question['correct_answer'] ?></div>
-                                </div>
-                                <p class="card-text text-muted">Incorrect Attempts: <?= $question['incorrect_count'] ?></p>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                    <?php if (count($missingQuestions) == 0) : ?>
-                        <div class="text-muted">No missed questions in the <?= $isLast7Days ? 'last 7 days' : 'selected period' ?></div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<?php
-if ($weeklyGoal) {
-    ?>
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-body">
-                    <p class="text-muted mb-4"><strong><?= $student['full_name'] ?>'s</strong> Points Earned</p>
-
-                    <div class="row chart-row">
-
-                        <!-- Left section for Weekly Goal doughnut chart -->
-                        <div class="col-md-6">
-                            <h5 class="card-title text-center">This Week</h5>
-                            <div class="d-flex justify-content-center">
-                                <canvas id="weeklyGoalChart"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Right section for Cumulative Yearly Goal doughnut chart -->
-                        <div class="col-md-6">
-                            <h5 class="card-title text-center">This Year</h5>
-                            <div class="d-flex justify-content-center">
-                                <canvas id="yearlyGoalChart"></canvas>
+                                <canvas id="overallChart" height="100"></canvas>
                             </div>
                         </div>
                     </div>
@@ -204,240 +139,300 @@ if ($weeklyGoal) {
             </div>
         </div>
     </div>
-    <?php
-}
-?>
+
+    <!-- Topic-wise Performance -->
+    <div class="col-12">
+        <!-- Topics will be rendered here -->
+         <div id="topicsContainer" class="row">
+
+         </div>
+    </div>
+</div>
 
 <?= $this->endSection() ?>
 
 <?= $this->section('foot') ?>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     $(() => {
+        const topics = <?= json_encode($topics) ?>;
 
-        $("#sendMissedQuestionsEmail").click(async () => {
+        // Calculate overall statistics
+        let totalTopics = 0;
+        let totalScore = 0;
+        let totalSessions = 0;
+        let levelScores = {1: [], 2: [], 3: []};
 
-            const studentId = "<?= $student['id'] ?>";
-            const startDate = "<?= $startDate ?>";
-            const endDate = "<?= $endDate ?>";
-            const startDateInputValue = $("#startDate").val();
-            const endDateInputValue = $("#endDate").val();
+        topics.forEach(topic => {
+            let topicHasResults = false;
+            let topicScore = 0;
+            let topicSessions = 0;
 
-            if (startDateInputValue != startDate || endDateInputValue != endDate) {
-                new Notify({
-                    title: 'Input Error',
-                    text: 'You have changed the date values. Please click the <b>Filter</b> button again to apply the new date filter before sending the email.',
-                    status: 'warning',
-                    autoclose: true,
-                    autotimeout: 6000
-                });
-                return;
-            }
-
-            if (startDate == '' || endDate == '') {
-                new Notify({
-                    title: 'Input Error',
-                    text: 'Please enter a start and end date.',
-                    status: 'warning',
-                    autoclose: true,
-                    autotimeout: 3000
-                });
-                return;
-            }
-
-            if (startDate > endDate) {
-                new Notify({
-                    title: 'Input Error',
-                    text: 'Start date cannot be after end date',
-                    status: 'error',
-                    autoclose: true,
-                    autotimeout: 3000
-                });
-                return;
-            }
-
-            $("#sendMissedQuestionsEmail").attr('data-content', $("#sendMissedQuestionsEmail").html()).html('<i class="fa fa-spinner fa-spin"></i>').css('pointer-events', 'none');
-
-            let formData = new FormData();
-            formData.append('student_id', studentId);
-            formData.append('start_date', startDate);
-            formData.append('end_date', endDate);
-
-            let response = await ajaxCall({
-                url: baseUrl + '/admin/students/send-missed-questions-email',
-                data: formData,
-                csrfHeader: '<?= csrf_header() ?>',
-                csrfHash: '<?= csrf_hash() ?>'
+            // Process each level
+            Object.keys(topic.results).forEach(level => {
+                const results = topic.results[level];
+                if (results && results.length > 0) {
+                    topicHasResults = true;
+                    results.forEach(result => {
+                        const score = parseFloat(result.percentage);
+                        levelScores[level].push(score);
+                        topicScore += score;
+                        topicSessions++;
+                        totalSessions++;
+                    });
+                }
             });
 
-            if (response.status == 'success') {
-                new Notify({
-                    title: 'Success',
-                    text: 'Emails sent successfully',
-                    status: 'success',
-                    autoclose: true,
-                    autotimeout: 3000
-                });
+            if (topicHasResults) {
+                totalTopics++;
+                totalScore += topicScore / topicSessions; // Average score for this topic
             }
-            else {
-                new Notify({
-                    title: 'Error',
-                    text: response.message,
-                    status: 'error',
-                    autoclose: true,
-                    autotimeout: 3000
-                });
-            }
-
-            $("#sendMissedQuestionsEmail").html($("#sendMissedQuestionsEmail").attr('data-content')).css('pointer-events', 'auto');
         });
 
-        $("#progressFilterBtn").click(() => {
-            const startDate = $("#startDateProgress").val();
-            const endDate = $("#endDateProgress").val();
+        // Update overview stats
+        $('#totalTopics').text(totalTopics);
+        $('#totalSessions').text(totalSessions);
+        $('#averageScore').text(totalTopics > 0 ? Math.round(totalScore / totalTopics) + '%' : '0%');
 
-            // Check if startDate is before endDate
-            if (startDate > endDate) {
-                new Notify({
-                    title: 'Error',
-                    text: 'Start date cannot be after end date',
-                    status: 'error',
-                    autoclose: true,
-                    autotimeout: 3000
-                });
-                return;
-            }
+        // Create overall performance chart
+        createOverallChart(levelScores);
 
-            window.location.href = "<?= base_url('/admin/students/reports/' . $student['id']) ?>?sdp=" + startDate + "&edp=" + endDate;
-        });
-
-        $("#missedQuestionsFilterBtn").click(() => {
-            const startDate = $("#startDate").val();
-            const endDate = $("#endDate").val();
-
-            // Check if startDate is before endDate
-            if (startDate > endDate) {
-                new Notify({
-                    title: 'Error',
-                    text: 'Start date cannot be after end date',
-                    status: 'error',
-                    autoclose: true,
-                    autotimeout: 3000
-                });
-                return;
-            }
-
-            window.location.href = "<?= base_url('/admin/students/reports/' . $student['id']) ?>?sd=" + startDate + "&ed=" + endDate;
-        });
+        // Render topic performance cards
+        renderTopicCards(topics);
     });
-</script>
-<?php
-if ($weeklyGoal) {
-    ?>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const earned = <?= $currentWeekPoints ?? 0 ?>;
-        const goal = <?= $weeklyGoal['goal_points'] ?>;
-        const percent = Math.round((earned / goal) * 100);
 
-        const yearlyEarned = <?= $currentYearTotalPoints ?>;
-        const yearlyGoal = 3500;
-        const yearlyPercent = Math.round((yearlyEarned / yearlyGoal) * 100);
+    function createOverallChart(levelScores) {
+        const ctx = document.getElementById('overallChart').getContext('2d');
 
-        const ctx = document.getElementById('weeklyGoalChart').getContext('2d');
+        const levelLabels = ['Level 1', 'Level 2', 'Level 3'];
+        const levelData = [
+            levelScores[1].length > 0 ? calculateAverage(levelScores[1]) : 0,
+            levelScores[2].length > 0 ? calculateAverage(levelScores[2]) : 0,
+            levelScores[3].length > 0 ? calculateAverage(levelScores[3]) : 0
+        ];
+
         new Chart(ctx, {
-            type: 'doughnut',
+            type: 'bar',
             data: {
-                labels: ['Earned Points', 'Remaining Points'],
+                labels: levelLabels,
                 datasets: [{
-                    data: [earned, goal - earned],
-                    backgroundColor: ['#4CAF50', '#e0e0e0'],
+                    label: 'Average Score (%)',
+                    data: levelData,
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(153, 102, 255, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
                     borderWidth: 1
                 }]
             },
             options: {
-                cutout: '75%',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                },
                 plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return ` ${context.parsed}`;
-                            }
-                        }
+                    legend: {
+                        display: false
                     }
                 }
-            },
-            plugins: [
-                {
-                    id: 'centerText',
-                    beforeDraw(chart) {
-                        const {width} = chart;
-                        const {height} = chart;
-                        const ctx = chart.ctx;
-                        ctx.restore();
+            }
+        });
+    }
 
-                        const fontSize = (height / 160).toFixed(2);
-                        ctx.font = `${fontSize}em sans-serif`;
-                        ctx.textBaseline = "middle";
+    function renderTopicCards(topics) {
+        const container = $('#topicsContainer');
 
-                        const text = `${earned}/${goal}`;
-                        const textX = Math.round((width - ctx.measureText(text).width) / 2);
-                        const textY = (height / 2) + 15;
+        topics.forEach(topic => {
+            // Check if topic has any results
+            let hasResults = false;
+            Object.values(topic.results).forEach(results => {
+                if (results && results.length > 0) hasResults = true;
+            });
 
-                        ctx.fillText(text, textX, textY);
-                        ctx.save();
-                    }
-                }
-            ]
+            if (!hasResults) return; // Skip topics with no results
+
+            const topicCard = $(`
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">${topic.name}</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="level-card level-1">
+                                        <h6>Level 1</h6>
+                                        <div class="level-stats" data-level="1"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="level-card level-2">
+                                        <h6>Level 2</h6>
+                                        <div class="level-stats" data-level="2"></div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="level-card level-3">
+                                        <h6>Level 3</h6>
+                                        <div class="level-stats" data-level="3"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="topic-chart mb-3">
+                                <canvas id="topicChart-${topic.id}" height="80"></canvas>
+                            </div>
+
+                            <div class="session-details">
+                                <button class="btn btn-sm btn-outline-primary toggle-sessions" data-topic="${topic.id}">
+                                    Show Session Details
+                                </button>
+                                <div class="sessions-list mt-3" id="sessions-${topic.id}" style="display: none;">
+                                    <!-- Session details will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+
+            container.append(topicCard);
+
+            // Populate level stats and create topic chart
+            populateLevelStats(topicCard, topic);
+            createTopicChart(topic);
+
+            // Add session toggle functionality
+            topicCard.find('.toggle-sessions').click(function() {
+                const topicId = $(this).data('topic');
+                const sessionsList = $(`#sessions-${topicId}`);
+                sessionsList.slideToggle();
+                $(this).text(sessionsList.is(':visible') ? 'Hide Session Details' : 'Show Session Details');
+            });
+        });
+    }
+
+    function populateLevelStats(card, topic) {
+        for (let level = 1; level <= 3; level++) {
+            const levelStats = card.find(`.level-stats[data-level="${level}"]`);
+            const results = topic.results[level] || [];
+
+            if (results.length === 0) {
+                levelStats.html('<span class="text-muted">Not attempted</span>');
+                continue;
+            }
+
+            const scores = results.map(r => parseFloat(r.percentage));
+            const avgScore = calculateAverage(scores);
+            const bestScore = Math.max(...scores);
+            const attempts = results.length;
+
+            levelStats.html(`
+                <div class="score-display">
+                    <div class="avg-score">${avgScore.toFixed(1)}%</div>
+                    <div class="score-details">
+                        <small>Best: ${bestScore.toFixed(1)}% | Attempts: ${attempts}</small>
+                    </div>
+                </div>
+                <div class="progress mt-2">
+                    <div class="progress-bar ${getProgressBarClass(avgScore)}"
+                         role="progressbar"
+                         style="width: ${avgScore}%"
+                         aria-valuenow="${avgScore}"
+                         aria-valuemin="0"
+                         aria-valuemax="100">
+                    </div>
+                </div>
+            `);
+
+            // Populate session details
+            const sessionsList = card.find(`#sessions-${topic.id}`);
+            results.forEach(result => {
+                const sessionDate = formatDate(result.created_at);
+                sessionsList.append(`
+                    <div class="session-item d-flex justify-content-between align-items-center border-bottom py-2">
+                        <div>
+                            <strong>Level ${level}</strong>
+                            <br>
+                            <small class="text-muted">${sessionDate}</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge ${getScoreBadgeClass(parseFloat(result.percentage))}">${result.percentage}%</span>
+                        </div>
+                    </div>
+                `);
+            });
+        }
+    }
+
+    function createTopicChart(topic) {
+        const ctx = document.getElementById(`topicChart-${topic.id}`).getContext('2d');
+
+        const levelData = [1, 2, 3].map(level => {
+            const results = topic.results[level] || [];
+            return results.length > 0 ? calculateAverage(results.map(r => parseFloat(r.percentage))) : 0;
         });
 
-        const yearlyCtx = document.getElementById('yearlyGoalChart').getContext('2d');
-        new Chart(yearlyCtx, {
-            type: 'doughnut',
+        new Chart(ctx, {
+            type: 'line',
             data: {
-                labels: ['Earned Points', 'Remaining Points'],
+                labels: ['Level 1', 'Level 2', 'Level 3'],
                 datasets: [{
-                    data: [yearlyEarned, yearlyGoal - yearlyEarned],
-                    backgroundColor: ['#4CAF50', '#e0e0e0'],
-                    borderWidth: 1
+                    label: 'Average Score',
+                    data: levelData,
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                    tension: 0.4,
+                    fill: true
                 }]
             },
             options: {
-                cutout: '75%',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                },
                 plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return ` ${context.parsed}`;
-                            }
-                        }
+                    legend: {
+                        display: false
                     }
                 }
-            },
-            plugins: [
-                {
-                    id: 'centerText',
-                    beforeDraw(chart) {
-                        const {width} = chart;
-                        const {height} = chart;
-                        const ctx = chart.ctx;
-                        ctx.restore();
-
-                        const fontSize = (height / 160).toFixed(2);
-                        ctx.font = `${fontSize}em sans-serif`;
-                        ctx.textBaseline = "middle";
-
-                        const text = `${yearlyEarned}/${yearlyGoal}`;
-                        const textX = Math.round((width - ctx.measureText(text).width) / 2);
-                        const textY = (height / 2) + 15;
-
-                        ctx.fillText(text, textX, textY);
-                        ctx.save();
-                    }
-                }
-            ]
+            }
         });
-    </script>
-    <?php
-}
-?>
+    }
+
+    function calculateAverage(scores) {
+        return scores.reduce((a, b) => a + b, 0) / scores.length;
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+    function getProgressBarClass(score) {
+        if (score >= 80) return 'bg-success';
+        if (score >= 60) return 'bg-warning';
+        return 'bg-danger';
+    }
+
+    function getScoreBadgeClass(score) {
+        if (score >= 80) return 'bg-success';
+        if (score >= 60) return 'bg-warning';
+        return 'bg-danger';
+    }
+</script>
 <?= $this->endSection() ?>

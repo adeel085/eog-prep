@@ -9,6 +9,7 @@ use App\Models\QuestionModel;
 use App\Models\UserLoginSessionModel;
 use App\Models\TopicQuestionsModel;
 use App\Models\StudentQuestionsResultsModel;
+use App\Models\StudentSessionResultModel;
 use App\Models\UserModel;
 
 use DateTime;
@@ -533,6 +534,44 @@ class Home extends BaseController
         ]);
 
         return $this->response->setJSON($response);
+    }
+
+    public function storeSessionResult() {
+        if (!$this->user) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+        }
+
+        if ($this->user['user_type'] != 'student') {
+            return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Forbidden']);
+        }
+
+        $topicId = $this->request->getPost('topic_id');
+        $level = $this->request->getPost('level');
+        $correctCount = $this->request->getPost('correct_count');
+        $totalQuestions = $this->request->getPost('total_questions');
+
+        if (!$topicId || !$level || $correctCount === null || !$totalQuestions) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Missing required parameters']);
+        }
+
+        $percentage = ($correctCount / $totalQuestions) * 100;
+
+        $studentSessionResultModel = new StudentSessionResultModel();
+        $studentSessionResultModel->insert([
+            'student_id' => $this->user['id'],
+            'topic_id' => $topicId,
+            'level' => $level,
+            'percentage' => $percentage
+        ]);
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'data' => [
+                'correct_answers' => $correctCount,
+                'total_questions' => $totalQuestions,
+                'percentage' => round($percentage, 2)
+            ]
+        ]);
     }
 
     public function evaluationPage() {

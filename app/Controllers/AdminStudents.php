@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use App\Models\UserModel;
 use App\Models\ClassModel;
+use App\Models\TopicModel;
+use App\Models\StudentSessionResultModel;
 
 use CodeIgniter\Exceptions\PageNotFoundException;
 
@@ -263,6 +265,8 @@ class AdminStudents extends BaseController
         }
 
         $userModel = new UserModel();
+        $topicModel = new TopicModel();
+        $studentSessionResultModel = new StudentSessionResultModel();
 
         $student = $userModel->find($id);
 
@@ -270,11 +274,21 @@ class AdminStudents extends BaseController
             throw PageNotFoundException::forPageNotFound('Student not found');
         }
 
+        $topics = $topicModel->findAll();
+
+        foreach ($topics as &$topic) {
+            $topic['results'] = [];
+            for ($level = 1; $level <= 3; $level++) {
+                $topic['results'][$level] = $studentSessionResultModel->where('student_id', $id)->where('topic_id', $topic['id'])->where('level', $level)->findAll();
+            }
+        }
+
         return view('admin/students_report', [
             'pageTitle' => 'Reports',
             'student' => $student,
             'flashData' => $this->session->getFlashdata(),
-            'user' => $this->user
+            'user' => $this->user,
+            'topics' => $topics
         ]);
     }
 

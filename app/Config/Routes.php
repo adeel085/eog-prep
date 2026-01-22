@@ -49,9 +49,6 @@ $routes->get('/progress', 'Home::progressPage');
 $routes->get('/history', 'Home::historyPage');
 $routes->get('/admin/preferences', 'AdminPreferences::index');
 
-$routes->get('/cron/weekly-points-reminder-email', 'CronController::weeklyPointsReminderEmail');
-$routes->get('/cron/send-monday-missing-questions-report-to-parents', 'CronController::sendMondayMissingQuestionsReportToParents');
-
 $routes->post('/admin/login', 'AdminLogin::login');
 $routes->post('/admin/students/saveNew', 'AdminStudents::saveNew');
 $routes->post('/admin/students/update', 'AdminStudents::update');
@@ -82,6 +79,7 @@ $routes->post('/admin/goals/fetchWeeklyGoals', 'AdminGoals::fetchWeeklyGoals');
 $routes->post('/admin/goals/addWeeklyGoal', 'AdminGoals::addWeeklyGoal');
 $routes->post('/admin/goals/deleteWeeklyGoal', 'AdminGoals::deleteWeeklyGoal');
 $routes->post('/home/getHistory', 'Home::getHistory');
+$routes->post('/home/store-session-result', 'Home::storeSessionResult');
 $routes->post('/admin/students/clear-last-year-data', 'AdminStudents::clearLastYearData');
 
 $routes->post('/admin/teachers/saveNew', 'AdminTeachers::saveNew');

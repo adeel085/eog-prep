@@ -76,6 +76,8 @@
 <script>
     let questions = <?= json_encode($questions) ?>;
     let currentQuestionIndex = -1;
+    let correctAnswers = 0;
+    let totalQuestions = <?= count($questions) ?>;
 
     $(document).ready(async function() {
 
@@ -115,6 +117,7 @@
             });
 
             if (correct) {
+                correctAnswers++;
                 new Notify({
                     title: 'Success',
                     text: 'Correct answer',
@@ -168,16 +171,8 @@
         let question = getQuestion();
 
         if (question == null) {
-            new Notify({
-                title: 'Info',
-                text: 'No more questions found in your current topic and current level',
-                status: 'info',
-                autoclose: true,
-                autotimeout: 3000
-            });
-            setTimeout(() => {
-                window.location.href = baseUrl + '/page-selection';
-            }, 3000);
+            // Session completed - store results and show them
+            storeSessionResults();
             return;
         }
 
@@ -242,6 +237,128 @@
 
     function base64DecodeUnicode(str) {
         return new TextDecoder().decode(Uint8Array.from(atob(str), c => c.charCodeAt(0)));
+    }
+
+    async function storeSessionResults() {
+        try {
+
+            let formData = new FormData();
+            formData.append('topic_id', <?= $currentTopic['id'] ?>);
+            formData.append('level', <?= $currentLevel ?>);
+            formData.append('correct_count', correctAnswers);
+            formData.append('total_questions', totalQuestions);
+
+            const result = await ajaxCall({
+                url: baseUrl + '/home/store-session-result',
+                data: formData,
+                csrfHeader: '<?= csrf_header() ?>',
+                csrfHash: '<?= csrf_hash() ?>'
+            });
+
+            if (result.status === 'success') {
+                showSessionResults(result.data);
+            }
+            else {
+                console.error('Failed to store session results:', result.message);
+                // Still show results even if storage failed
+                showSessionResults({
+                    correct_answers: correctAnswers,
+                    total_questions: totalQuestions,
+                    percentage: Math.round((correctAnswers / totalQuestions) * 100 * 100) / 100
+                });
+            }
+        } catch (error) {
+            console.error('Error storing session results:', error);
+            // Show results anyway
+            showSessionResults({
+                correct_answers: correctAnswers,
+                total_questions: totalQuestions,
+                percentage: Math.round((correctAnswers / totalQuestions) * 100 * 100) / 100
+            });
+        }
+    }
+
+    function showSessionResults(data) {
+        // Hide the question area
+        $('.question-center').hide();
+
+        // Show results
+        const resultsHtml = `
+            <div class="container-fluid mt-5">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="question-center">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h2 class="card-title mb-4">Session Complete!</h2>
+
+                                    <div class="row mb-4">
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    <h4 class="card-title text-success">${data.correct_answers}</h4>
+                                                    <p class="card-text">Correct Answers</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    <h4 class="card-title text-primary">${data.total_questions}</h4>
+                                                    <p class="card-text">Total Questions</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    <h4 class="card-title text-info">${data.percentage}%</h4>
+                                                    <p class="card-text">Score</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="stars-container mb-4">
+                                        ${getStarsHtml(data.correct_answers, data.total_questions)}
+                                    </div>
+
+                                    <p class="text-muted">Redirecting to page selection in a few seconds...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        $('body').append(resultsHtml);
+
+        // Redirect after 5 seconds
+        setTimeout(() => {
+            window.location.href = baseUrl + 'page-selection';
+        }, 5000);
+    }
+
+    function getStarsHtml(correct, total) {
+        const percentage = (correct / total) * 100;
+        let stars = 0;
+
+        if (percentage >= 90) stars = 5;
+        else if (percentage >= 75) stars = 4;
+        else if (percentage >= 60) stars = 3;
+        else if (percentage >= 40) stars = 2;
+        else stars = 1;
+
+        let starsHtml = '';
+        for (let i = 0; i < 5; i++) {
+            if (i < stars) {
+                starsHtml += '<span style="color: #ffd700;">★</span>';
+            } else {
+                starsHtml += '<span style="color: #c0c0c0;">★</span>';
+            }
+        }
+        return starsHtml;
     }
 
     if ('BroadcastChannel' in window) {
