@@ -27,46 +27,113 @@
         color: #6c757d;
     }
     .topic-card {
-        border-left: 4px solid #dee2e6;
-        transition: all 0.3s ease;
-        margin-bottom: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        overflow: hidden;
     }
-    .topic-card:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    .topic-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 15px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
-    .topic-card.excellent {
-        border-left-color: #28a745;
+    .topic-header:hover {
+        opacity: 0.95;
     }
-    .topic-card.good {
-        border-left-color: #ffc107;
+    .topic-header h6 {
+        margin: 0;
+        font-weight: 600;
     }
-    .topic-card.needs-work {
-        border-left-color: #dc3545;
+    .topic-header .toggle-icon {
+        transition: transform 0.3s ease;
     }
-    .topic-card.no-data {
-        border-left-color: #6c757d;
-        opacity: 0.7;
+    .topic-header.collapsed .toggle-icon {
+        transform: rotate(-90deg);
     }
-    .score-badge {
-        font-size: 1.1rem;
-        font-weight: bold;
-        padding: 8px 15px;
-        border-radius: 20px;
+    .topic-content {
+        padding: 0;
     }
-    .level-badge {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        margin-right: 5px;
+    .level-section {
+        border-bottom: 1px solid #e9ecef;
     }
-    .level-badge.has-data {
-        background-color: #e7f1ff;
-        color: #0d6efd;
+    .level-section:last-child {
+        border-bottom: none;
     }
-    .level-badge.no-data {
+    .level-header {
         background-color: #f8f9fa;
-        color: #adb5bd;
+        padding: 10px 15px;
+        font-weight: 600;
+        color: #495057;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .level-header .level-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .level-indicator {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+        color: white;
+    }
+    .level-indicator.level-1 { background-color: #28a745; }
+    .level-indicator.level-2 { background-color: #ffc107; color: #333; }
+    .level-indicator.level-3 { background-color: #dc3545; }
+    .student-list {
+        padding: 0;
+        margin: 0;
+        list-style: none;
+    }
+    .student-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 15px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .student-item:last-child {
+        border-bottom: none;
+    }
+    .student-item:nth-child(odd) {
+        background-color: #fafafa;
+    }
+    .student-rank {
+        min-width: 24px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-right: 10px;
+        color: #6c757d;
+    }
+    .student-name {
+        flex-grow: 1;
+        font-weight: 500;
+    }
+    .student-score {
+        font-weight: bold;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.875rem;
+    }
+    .student-score.excellent { background-color: #d4edda; color: #155724; }
+    .student-score.good { background-color: #fff3cd; color: #856404; }
+    .student-score.needs-work { background-color: #f8d7da; color: #721c24; }
+    .no-students {
+        padding: 15px;
+        text-align: center;
+        color: #6c757d;
+        font-style: italic;
     }
     .empty-state {
         text-align: center;
@@ -81,6 +148,20 @@
     .loading-spinner {
         text-align: center;
         padding: 40px;
+        width: 100%;
+    }
+    .loading-spinner .spinner-border {
+        display: block;
+        margin: 0 auto 10px;
+    }
+    .students-count-badge {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 10px;
+        background-color: rgba(255,255,255,0.2);
+    }
+    .visually-hidden {
+        display: none;
     }
 </style>
 <?= $this->endSection() ?>
@@ -216,44 +297,14 @@
             let html = '<div class="topics-list">';
 
             topics.forEach((topic, index) => {
-                const hasData = topic.sessions_count > 0;
-                const score = topic.average_score;
-                
-                // Determine card class based on score
-                let cardClass = 'no-data';
-                let scoreClass = 'bg-secondary';
-                if (hasData) {
-                    if (score >= 80) {
-                        cardClass = 'excellent';
-                        scoreClass = 'bg-success';
-                    } else if (score >= 60) {
-                        cardClass = 'good';
-                        scoreClass = 'bg-warning';
-                    } else {
-                        cardClass = 'needs-work';
-                        scoreClass = 'bg-danger';
-                    }
-                }
-
                 html += `
-                    <div class="card topic-card ${cardClass}">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div class="topic-info flex-grow-1">
-                                    <h6 class="mb-1">${topic.name}</h6>
-                                    <div class="level-badges mb-2">
-                                        ${renderLevelBadges(topic.level_averages)}
-                                    </div>
-                                    <small class="text-muted">
-                                        ${hasData ? `${topic.sessions_count} session${topic.sessions_count != 1 ? 's' : ''} completed` : 'No sessions yet'}
-                                    </small>
-                                </div>
-                                <div class="topic-score text-end">
-                                    <span class="score-badge ${scoreClass} text-white">
-                                        ${hasData ? score + '%' : 'N/A'}
-                                    </span>
-                                </div>
-                            </div>
+                    <div class="topic-card">
+                        <div class="topic-header" data-topic-id="${topic.id}">
+                            <h6>${topic.name}</h6>
+                            <span class="toggle-icon">▼</span>
+                        </div>
+                        <div class="topic-content" id="topic-content-${topic.id}">
+                            ${renderLevels(topic.levels)}
                         </div>
                     </div>
                 `;
@@ -261,20 +312,63 @@
 
             html += '</div>';
             $('#topicsReportContainer').html(html);
+
+            // Handle collapse toggle
+            $('.topic-header').on('click', function() {
+                const topicId = $(this).data('topic-id');
+                $(this).toggleClass('collapsed');
+                $(`#topic-content-${topicId}`).slideToggle(200);
+            });
         }
 
-        function renderLevelBadges(levelAverages) {
-            let badges = '';
+        function renderLevels(levels) {
+            let html = '';
+            
             for (let level = 1; level <= 3; level++) {
-                const avg = levelAverages[level];
-                const hasData = avg !== null;
-                badges += `
-                    <span class="level-badge ${hasData ? 'has-data' : 'no-data'}">
-                        L${level}: ${hasData ? Math.round(avg) + '%' : '-'}
-                    </span>
+                const students = levels[level] || [];
+                
+                html += `
+                    <div class="level-section">
+                        <div class="level-header">
+                            <div class="level-title">
+                                <span class="level-indicator level-${level}">${level}</span>
+                                <span>Level ${level}</span>
+                            </div>
+                            <span class="students-count-badge bg-secondary text-white">
+                                ${students.length} student${students.length != 1 ? 's' : ''}
+                            </span>
+                        </div>
+                        ${students.length > 0 ? renderStudentsList(students) : '<div class="no-students">No students have completed this level yet</div>'}
+                    </div>
                 `;
             }
-            return badges;
+            
+            return html;
+        }
+
+        function renderStudentsList(students) {
+            let html = '<ul class="student-list">';
+            
+            students.forEach((student, index) => {
+                const rank = index + 1;
+
+                let scoreClass = 'needs-work';
+                if (student.score >= 80) scoreClass = 'excellent';
+                else if (student.score >= 60) scoreClass = 'good';
+
+                html += `
+                    <li class="student-item">
+                        <div class="d-flex align-items-center">
+                            <span class="student-rank">${rank}.</span>
+                            <span class="student-name">${student.student_name}</span>
+                        </div>
+                        <span class="student-score ${scoreClass}">${student.score}%</span>
+                    </li>
+                `;
+            });
+            
+            html += '</ul>';
+            return html;
         }
 
         function showError(message) {

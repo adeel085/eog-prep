@@ -74,7 +74,6 @@ class AdminDashboard extends BaseController
             return $this->response->setStatusCode(404)->setJSON(['status' => 'error', 'message' => 'Class not found']);
         }
 
-        $userModel = new UserModel();
         $topicModel = new TopicModel();
         $studentSessionResultModel = new StudentSessionResultModel();
 
@@ -91,6 +90,12 @@ class AdminDashboard extends BaseController
         
         $students = $studentsQuery->getResultArray();
         $studentIds = array_column($students, 'id');
+        
+        // Create a map of student id to name
+        $studentMap = [];
+        foreach ($students as $student) {
+            $studentMap[$student['id']] = $student['full_name'];
+        }
 
         if (empty($studentIds)) {
             return $this->response->setJSON([
@@ -103,70 +108,74 @@ class AdminDashboard extends BaseController
         }
 
         // Get all topics owned by this teacher
-        $topics = $topicModel->where('owner_id', $this->user['id'])->findAll();
+        $topics = $topicModel->findAll();
 
         // Get all session results for students in this class
         $results = $studentSessionResultModel->whereIn('student_id', $studentIds)->findAll();
 
-        // Calculate average scores per topic
-        $topicScores = [];
+        // Organize results by topic -> level -> student (best score per student)
+        $topicData = [];
         foreach ($results as $result) {
             $topicId = $result['topic_id'];
-            if (!isset($topicScores[$topicId])) {
-                $topicScores[$topicId] = [
-                    'total_score' => 0,
-                    'count' => 0,
-                    'level_scores' => [1 => [], 2 => [], 3 => []]
+            $level = intval($result['level']);
+            $studentId = $result['student_id'];
+            $percentage = floatval($result['percentage']);
+
+            if (!isset($topicData[$topicId])) {
+                $topicData[$topicId] = [
+                    1 => [],
+                    2 => [],
+                    3 => []
                 ];
             }
-            $topicScores[$topicId]['total_score'] += floatval($result['percentage']);
-            $topicScores[$topicId]['count']++;
-            
-            $level = intval($result['level']);
+
             if ($level >= 1 && $level <= 3) {
-                $topicScores[$topicId]['level_scores'][$level][] = floatval($result['percentage']);
-            }
-        }
-
-        // Build topics data with scores
-        $topicsData = [];
-        foreach ($topics as $topic) {
-            $topicId = $topic['id'];
-            $avgScore = 0;
-            $sessionsCount = 0;
-            $levelAverages = [1 => null, 2 => null, 3 => null];
-
-            if (isset($topicScores[$topicId])) {
-                $avgScore = $topicScores[$topicId]['total_score'] / $topicScores[$topicId]['count'];
-                $sessionsCount = $topicScores[$topicId]['count'];
-                
-                // Calculate level averages
-                for ($level = 1; $level <= 3; $level++) {
-                    $levelScores = $topicScores[$topicId]['level_scores'][$level];
-                    if (!empty($levelScores)) {
-                        $levelAverages[$level] = array_sum($levelScores) / count($levelScores);
-                    }
+                // Keep only the best score for each student per topic/level
+                if (!isset($topicData[$topicId][$level][$studentId]) || 
+                    $topicData[$topicId][$level][$studentId] < $percentage) {
+                    $topicData[$topicId][$level][$studentId] = $percentage;
                 }
             }
-
-            $topicsData[] = [
-                'id' => $topicId,
-                'name' => $topic['name'],
-                'average_score' => round($avgScore, 2),
-                'sessions_count' => $sessionsCount,
-                'level_averages' => $levelAverages
-            ];
         }
 
-        // Sort topics by average score (best to worst)
-        usort($topicsData, function($a, $b) {
-            return $b['average_score'] <=> $a['average_score'];
-        });
+        // Build topics response with student rankings
+        $topicsResponse = [];
+        foreach ($topics as $topic) {
+            $topicId = $topic['id'];
+            $levels = [];
+
+            for ($level = 1; $level <= 3; $level++) {
+                $studentScores = [];
+                
+                if (isset($topicData[$topicId][$level])) {
+                    foreach ($topicData[$topicId][$level] as $studentId => $score) {
+                        $studentScores[] = [
+                            'student_id' => $studentId,
+                            'student_name' => $studentMap[$studentId] ?? 'Unknown',
+                            'score' => round($score, 2)
+                        ];
+                    }
+                    
+                    // Sort by score descending (best to worst)
+                    usort($studentScores, function($a, $b) {
+                        return $b['score'] <=> $a['score'];
+                    });
+                }
+
+                $levels[$level] = $studentScores;
+            }
+
+            $topicsResponse[] = [
+                'id' => $topicId,
+                'name' => $topic['name'],
+                'levels' => $levels
+            ];
+        }
 
         return $this->response->setJSON([
             'status' => 'success',
             'data' => [
-                'topics' => $topicsData,
+                'topics' => $topicsResponse,
                 'students_count' => count($studentIds)
             ]
         ]);
