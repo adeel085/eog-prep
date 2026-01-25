@@ -71,6 +71,7 @@ $routes->post('/admin/classes/saveNew', 'AdminClasses::saveNew');
 $routes->post('/admin/classes/delete', 'AdminClasses::delete');
 $routes->post('/admin/classes/update', 'AdminClasses::update');
 $routes->post('/admin/dashboard/viewReport', 'AdminDashboard::viewReport');
+$routes->post('/admin/dashboard/class-topics-report', 'AdminDashboard::getClassTopicsReport');
 $routes->post('/get-question', 'Home::getQuestion');
 $routes->post('/class/send-email', 'AdminClasses::sendEmailToParents');
 $routes->post('/admin/timer/save', 'AdminTimer::save');
