@@ -38,6 +38,14 @@
             <div class="mb-3">
                 <input type="password" class="form-control" placeholder="Password" id="password" />
             </div>
+            <div class="mb-3">
+                <select class="form-control" id="grade">
+                    <option value="" disabled selected>Select Grade</option>
+                    <?php foreach ($grades as $grade) : ?>
+                        <option value="<?= $grade['id'] ?>"><?= $grade['name'] ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
             <div>
                 <button class="btn btn-primary w-100" id="signupBtn">Signup</button>
             </div>
@@ -65,11 +73,12 @@
             const username = $('#username').val();
             const email = $('#email').val();
             const password = $('#password').val();
+            const gradeId = $('#grade').val();
 
-            if (full_name == '' || username == '' || email == '' || password == '') {
+            if (full_name == '' || username == '' || email == '' || password == '' || gradeId == '') {
                 new Notify({
                     title: 'Error',
-                    text: 'Please enter your full name, username, email and password',
+                    text: 'Please enter your full name, username, email, password and grade',
                     status: 'error',
                     autoclose: true,
                     autotimeout: 3000
@@ -84,6 +93,7 @@
                 formData.append('username', username);
                 formData.append('email', email);
                 formData.append('password', password);
+                formData.append('gradeId', gradeId);
                 
                 // Show loader in login button
                 $(this).attr('data-content', $(this).html()).html('<i class="fa fa-spinner fa-spin"></i>').css('pointer-events', 'none');

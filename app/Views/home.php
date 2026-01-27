@@ -99,6 +99,18 @@
 
     $(document).ready(async function() {
 
+        if (questions.length == 0) {
+            new Notify({
+                title: 'Error',
+                text: 'No questions available for this topic/level/grade',
+                status: 'error',
+                autoclose: true,
+                autotimeout: 4000
+            });
+            $("#submitBtn").hide();
+            return;
+        }
+
         showNextQuestion();
 
         $("#submitBtn").click(async function() {

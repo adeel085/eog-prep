@@ -4,9 +4,9 @@ namespace App\Models;
 
 use CodeIgniter\Model;
 
-class QuestionModel extends Model
+class GradeModel extends Model
 {
-    protected $table = 'questions';
+    protected $table = 'grades';
     protected $primaryKey = 'id';
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
@@ -17,5 +17,5 @@ class QuestionModel extends Model
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
     protected $dateFormat = 'datetime';
-    protected $allowedFields = ['level', 'question_type', 'question_html', 'solution_html', 'owner_id', 'grade_id'];
+    protected $allowedFields = ['name'];
 }

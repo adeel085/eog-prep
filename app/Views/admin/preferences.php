@@ -46,29 +46,57 @@
         $("#saveChangesBtn").click(async function() {
             let sendEmailReminders = $("#sendEmailRemindersSelect").val();
             
-            let formData = new FormData();
-            formData.append('sendEmailReminders', sendEmailReminders);
+            try {
 
-            let response = await ajaxCall({
-                url: window.baseUrl + 'admin/preferences/save',
-                data: formData,
-                csrfHeader: '<?= csrf_header() ?>',
-                csrfHash: '<?= csrf_hash() ?>'
-            });
+                let formData = new FormData();
+                formData.append('sendEmailReminders', sendEmailReminders);
 
-            if (response.status == 'success') {
-                new Notify({
-                    title: 'Success',
-                    text: 'Changes saved successfully',
-                    status: 'success',
-                    autoclose: true,
-                    autotimeout: 3000
+                let response = await ajaxCall({
+                    url: window.baseUrl + 'admin/preferences/save',
+                    data: formData,
+                    csrfHeader: '<?= csrf_header() ?>',
+                    csrfHash: '<?= csrf_hash() ?>'
                 });
+
+                if (response.status == 'success') {
+                    new Notify({
+                        title: 'Success',
+                        text: 'Changes saved successfully',
+                        status: 'success',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+                }
+                else {
+                    new Notify({
+                        title: 'Error',
+                        text: response.message,
+                        status: 'error',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+                }
             }
-            else {
+            catch (error) {
+                if (error.status == 401) {
+                    new Notify({
+                        title: 'Error',
+                        text: "Your session has expired. Redirecting to login page...",
+                        status: 'error',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                    
+                    return;
+                }
+
                 new Notify({
                     title: 'Error',
-                    text: response.message,
+                    text: error.responseJSON.message || 'Something went wrong',
                     status: 'error',
                     autoclose: true,
                     autotimeout: 3000

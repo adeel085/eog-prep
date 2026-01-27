@@ -119,6 +119,15 @@
                     if ($user['user_type'] == 'admin') {
                         ?>
                         <li>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="<?= base_url('/admin/grades') ?>">
+                                    <i class="fa fa-graduation-cap navbar-icon"></i>
+                                    <span>Grades</span>
+                                </a>
+                            </div>
+                        </li>
+
+                        <li>
                             <div class="d-flex justify-content-between align-items-center navbar-item-expandable">
                                 <span>
                                     <i class="fa fa-user-tie navbar-icon"></i>Teachers
@@ -657,6 +666,42 @@
             status: 'warning',
             autoclose: true,
             autotimeout: 4000
+        });
+    </script>
+    <?php endif; ?>
+
+    <?php if (isset($flashData['status']) && $flashData['status'] == 'grade_created'): ?>
+    <script>
+        new Notify({
+            title: 'Success',
+            text: 'Grade created successfully',
+            status: 'success',
+            autoclose: true,
+            autotimeout: 3000
+        });
+    </script>
+    <?php endif; ?>
+
+    <?php if (isset($flashData['status']) && $flashData['status'] == 'grade_deleted'): ?>
+    <script>
+        new Notify({
+            title: 'Success',
+            text: 'Grade deleted successfully',
+            status: 'success',
+            autoclose: true,
+            autotimeout: 3000
+        });
+    </script>
+    <?php endif; ?>
+
+    <?php if (isset($flashData['status']) && $flashData['status'] == 'grade_updated'): ?>
+    <script>
+        new Notify({
+            title: 'Success',
+            text: 'Grade updated successfully',
+            status: 'success',
+            autoclose: true,
+            autotimeout: 3000
         });
     </script>
     <?php endif; ?>

@@ -62,6 +62,18 @@
 
                     <div class="col-sm-6">
                         <div class="form-group">
+                            <label for="grade">Grade</label>
+                            <select class="form-control" id="grade">
+                                <option value="" disabled selected>Select Grade</option>
+                                <?php foreach ($grades as $grade) : ?>
+                                    <option value="<?= $grade['id'] ?>" <?= (isset($student['grade']) ? ($student['grade']['id'] == $grade['id'] ? 'selected' : '') : '') ?>><?= $grade['name'] ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
                             <label for="parentEmails">Parent Emails (comma separated)</label>
                             <input type="text" class="form-control" id="parentEmails" value="<?= $student['parent_emails'] ?>">
                         </div>
@@ -92,6 +104,7 @@
             let email = $('#email').val().trim();
             let password = $('#password').val().trim();
             let classId = $('#class').val();
+            let gradeId = $('#grade').val();
             let parentEmails = $('#parentEmails').val().trim();
 
             if (!name || !username || !email) {
@@ -114,6 +127,7 @@
                 formData.append('email', email);
                 formData.append('password', password);
                 formData.append('classId', classId);
+                formData.append('gradeId', gradeId);
                 formData.append('parentEmails', parentEmails);
                 
                 $(this).attr('data-content', $(this).html()).html('<i class="fa fa-spinner fa-spin"></i>').css('pointer-events', 'none');
@@ -138,7 +152,24 @@
                         autotimeout: 3000
                     });
                 }
-            } catch (error) {
+            }
+            catch (error) {
+                if (error.status == 401) {
+                    new Notify({
+                        title: 'Error',
+                        text: "Your session has expired. Redirecting to login page...",
+                        status: 'error',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                    
+                    return;
+                }
+                
                 new Notify({
                     title: 'Error',
                     text: error.responseJSON.message || 'Something went wrong',

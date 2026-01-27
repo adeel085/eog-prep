@@ -272,7 +272,24 @@
                 } else {
                     showError(result.message || 'Failed to load topics');
                 }
-            } catch (error) {
+            }
+            catch (error) {
+                if (error.status == 401) {
+                    new Notify({
+                        title: 'Error',
+                        text: "Your session has expired. Redirecting to login page...",
+                        status: 'error',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                    
+                    return;
+                }
+                
                 console.error('Error loading topics:', error);
                 showError('An error occurred while loading topics');
             }

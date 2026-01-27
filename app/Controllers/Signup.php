@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\UserModel;
 use App\Models\ClassModel;
+use App\Models\GradeModel;
 use App\Models\UserSignupModel;
 
 class Signup extends BaseController
@@ -19,8 +20,12 @@ class Signup extends BaseController
             }
         }
 
+        $gradeModel = new GradeModel();
+        $grades = $gradeModel->findAll();
+
         return view('signup', [
-            'pageTitle' => 'Signup'
+            'pageTitle' => 'Signup',
+            'grades' => $grades
         ]);
     }
 
@@ -45,8 +50,14 @@ class Signup extends BaseController
         $username = $this->request->getPost('username');
         $email = $this->request->getPost('email');
         $password = $this->request->getPost('password');
+        $gradeId = $this->request->getPost('gradeId');
 
         $userModel = new UserModel();
+        $gradeModel = new GradeModel();
+
+        if (!$gradeModel->find($gradeId)) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Grade not found']);
+        }
 
         $user = $userModel->where([
             'username' => $username,
@@ -74,6 +85,8 @@ class Signup extends BaseController
         $userSignupModel->insert([
             'ip_address' => $ip_address
         ]);
+
+        $userModel->insertUserMeta('studentGradeId', $gradeId, $userId);
 
         $this->session->setFlashdata('status', 'user_signed_up');
 

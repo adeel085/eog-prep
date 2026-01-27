@@ -61,6 +61,17 @@
                             </select>
                         </div>
                     </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="grade">Grade</label>
+                            <select class="form-control" id="grade">
+                                <?php foreach ($grades as $grade) : ?>
+                                    <option value="<?= $grade['id'] ?>"><?= $grade['name'] ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <hr>
@@ -189,10 +200,33 @@
             let topicId = $("#topic").val();
             let difficulty = $("#difficulty").val();
             let questionType = $("#questionType").val();
+            let gradeId = $("#grade").val();
             let question = CKEDITOR.instances["questionEditor"].getData();
             let solution = CKEDITOR.instances["solutionEditor"].getData();
             let answers = [];
             let correctAnswerIndex = -1;
+
+            if (!topicId) {
+                new Notify({
+                    title: 'Error',
+                    text: 'Please select a topic',
+                    status: 'error',
+                    autoclose: true,
+                    autotimeout: 3000
+                });
+                return;
+            }
+
+            if (!gradeId) {
+                new Notify({
+                    title: 'Error',
+                    text: 'Please select a grade',
+                    status: 'error',
+                    autoclose: true,
+                    autotimeout: 3000
+                });
+                return;
+            }
 
             if (questionType == "text") {
 
@@ -247,6 +281,7 @@
                 let formData = new FormData();
                 formData.append('topicId', topicId);
                 formData.append('difficulty', difficulty);
+                formData.append('gradeId', gradeId);
                 formData.append('questionType', questionType);
                 formData.append('question', question);
                 formData.append('solution', solution);
@@ -277,6 +312,21 @@
                 }
             }
             catch (error) {
+                if (error.status == 401) {
+                    new Notify({
+                        title: 'Error',
+                        text: "Your session has expired. Redirecting to login page...",
+                        status: 'error',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                    
+                    return;
+                }
                 new Notify({
                     title: 'Error',
                     text: error.responseJSON.message || 'Something went wrong',

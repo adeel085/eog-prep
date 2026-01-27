@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\UserModel;
 use App\Models\ClassModel;
+use App\Models\GradeModel;
 use App\Models\TopicModel;
 use App\Models\StudentSessionResultModel;
 
@@ -29,6 +30,8 @@ class AdminStudents extends BaseController
 
         $userModel = new UserModel();
         $classModel = new ClassModel();
+        $gradeModel = new GradeModel();
+
         $students = $userModel->filterByStudentOf($this->user['id']);
 
         if ($search) {
@@ -47,6 +50,16 @@ class AdminStudents extends BaseController
             }
             else {
                 $student['class'] = null;
+            }
+
+            $gradeId = $userModel->getUserMeta('studentGradeId', $student['id'], true);
+
+            if ($gradeId) {
+                $grade = $gradeModel->find($gradeId);
+                $student['grade'] = $grade;
+            }
+            else {
+                $student['grade'] = null;
             }
         }
 
@@ -71,11 +84,15 @@ class AdminStudents extends BaseController
         }
 
         $classModel = new ClassModel();
+        $gradeModel = new GradeModel();
+
         $classes = $classModel->where('owner_id', $this->user['id'])->findAll();
+        $grades = $gradeModel->findAll();
         
         return view('admin/students_new', [
             'pageTitle' => 'New Student',
             'classes' => $classes,
+            'grades' => $grades,
             'flashData' => $this->session->getFlashdata(),
             'user' => $this->user
         ]);
@@ -96,6 +113,7 @@ class AdminStudents extends BaseController
         $email = $this->request->getPost('email');
         $password = $this->request->getPost('password');
         $classId = $this->request->getPost('classId');
+        $gradeId = $this->request->getPost('gradeId');
         $parentEmails = $this->request->getPost('parentEmails');
 
         if (!$name || !$username || !$email || !$password) {
@@ -122,6 +140,10 @@ class AdminStudents extends BaseController
 
         if ($classId) {
             $userModel->insertUserMeta('studentClassId', $classId, $userId);
+        }
+
+        if ($gradeId) {
+            $userModel->insertUserMeta('studentGradeId', $gradeId, $userId);
         }
 
         if (!empty($parentEmails)) {
@@ -222,7 +244,8 @@ class AdminStudents extends BaseController
 
         $userModel = new UserModel();
         $classModel = new ClassModel();
-
+        $gradeModel = new GradeModel();
+        
         $student = $userModel->find($id);
 
         if (!$student) {
@@ -241,14 +264,22 @@ class AdminStudents extends BaseController
             $student['class'] = $classModel->find($classId);
         }
 
+        $gradeId = $userModel->getUserMeta('studentGradeId', $student['id'], true);
+
+        if ($gradeId) {
+            $student['grade'] = $gradeModel->find($gradeId);
+        }
+
         $student['parent_emails'] = $userModel->getUserMeta('parentEmails', $student['id'], true) ?? '';
 
         $classes = $classModel->where('owner_id', $this->user['id'])->findAll();
+        $grades = $gradeModel->findAll();
 
         return view('admin/students_edit', [
             'pageTitle' => 'Edit Student',
             'student' => $student,
             'classes' => $classes,
+            'grades' => $grades,
             'flashData' => $this->session->getFlashdata(),
             'user' => $this->user
         ]);
@@ -308,6 +339,7 @@ class AdminStudents extends BaseController
         $email = $this->request->getPost('email');
         $password = $this->request->getPost('password');
         $classId = $this->request->getPost('classId');
+        $gradeId = $this->request->getPost('gradeId');
         $parentEmails = $this->request->getPost('parentEmails');
 
         if (!$id || !$name || !$username || !$email) {
@@ -337,6 +369,10 @@ class AdminStudents extends BaseController
 
         if ($classId) {
             $userModel->updateUserMeta('studentClassId', $classId, $id, true);
+        }
+
+        if ($gradeId) {
+            $userModel->updateUserMeta('studentGradeId', $gradeId, $id, true);
         }
 
         if (!empty($parentEmails)) {

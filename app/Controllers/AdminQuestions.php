@@ -7,6 +7,7 @@ use App\Models\TopicModel;
 use App\Models\TopicQuestionsModel;
 use App\Models\QuestionModel;
 use App\Models\QuestionAnswersModel;
+use App\Models\GradeModel;
 
 class AdminQuestions extends BaseController
 {
@@ -23,6 +24,7 @@ class AdminQuestions extends BaseController
         $userModel = new UserModel();
         $topicModel = new TopicModel();
         $topicQuestionsModel = new TopicQuestionsModel();
+        $gradeModel = new GradeModel();
 
         $topics = $topicModel->findAll();
 
@@ -38,6 +40,13 @@ class AdminQuestions extends BaseController
 
         foreach ($questions as &$question) {
             $question['topics'] = $topicQuestionsModel->where('question_id', $question['id'])->findAll();
+
+            if ($question['grade_id']) {
+                $question['grade'] = $gradeModel->find($question['grade_id']);
+            }
+            else {
+                $question['grade'] = null;
+            }
         }
 
         return view('admin/questions', [
@@ -61,11 +70,15 @@ class AdminQuestions extends BaseController
         }
 
         $topicModel = new TopicModel();
+        $gradeModel = new GradeModel();
+
         $topics = $topicModel->where('owner_id', $this->user['id'])->findAll();
+        $grades = $gradeModel->findAll();
 
         return view('admin/questions_new', [
             'pageTitle' => 'New Question',
             'topics' => $topics,
+            'grades' => $grades,
             'flashData' => $this->session->getFlashdata(),
             'user' => $this->user
         ]);
@@ -83,6 +96,7 @@ class AdminQuestions extends BaseController
 
         $topicId = $this->request->getPost('topicId');
         $difficulty = $this->request->getPost('difficulty');
+        $gradeId = $this->request->getPost('gradeId');
         $questionType = $this->request->getPost('questionType');
         $question = $this->request->getPost('question');
         $solution = $this->request->getPost('solution');
@@ -98,7 +112,8 @@ class AdminQuestions extends BaseController
             'question_type' => $questionType,
             'question_html' => $question,
             'solution_html' => $solution,
-            'owner_id' => $this->user['id']
+            'owner_id' => $this->user['id'],
+            'grade_id' => $gradeId
         ]);
 
         $topicQuestionsModel->insert([
@@ -130,7 +145,11 @@ class AdminQuestions extends BaseController
         }
 
         $questionModel = new QuestionModel();
+        $gradeModel = new GradeModel();
+
         $question = $questionModel->find($id);
+
+        $grades = $gradeModel->findAll();
 
         if (!$question || $question['owner_id'] != $this->user['id']) {
             return redirect()->to(base_url('/admin/questions'));
@@ -142,6 +161,7 @@ class AdminQuestions extends BaseController
         return view('admin/questions_edit', [
             'pageTitle' => 'Edit Question',
             'question' => $question,
+            'grades' => $grades,
             'flashData' => $this->session->getFlashdata(),
             'user' => $this->user
         ]);
@@ -159,6 +179,7 @@ class AdminQuestions extends BaseController
 
         $questionId = $this->request->getPost('questionId');
         $difficulty = $this->request->getPost('difficulty');
+        $gradeId = $this->request->getPost('gradeId');
         $questionType = $this->request->getPost('questionType');
         $question_html = $this->request->getPost('question');
         $solution = $this->request->getPost('solution');
@@ -178,7 +199,8 @@ class AdminQuestions extends BaseController
             'level' => $difficulty,
             'question_type' => $questionType,
             'question_html' => $question_html,
-            'solution_html' => $solution
+            'solution_html' => $solution,
+            'grade_id' => $gradeId
         ]);
 
         if (!$updated) {

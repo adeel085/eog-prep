@@ -25,6 +25,8 @@ $routes->get('/admin/teachers/edit/(:any)', 'AdminTeachers::editPage/$1');
 $routes->get('/admin/classes', 'AdminClasses::index');
 $routes->get('/admin/classes/(:any)/students', 'AdminClasses::studentsPage/$1');
 
+$routes->get('/admin/grades', 'AdminGrades::index');
+
 $routes->get('/admin/topics', 'AdminTopics::index');
 $routes->get('/admin/topics/new', 'AdminTopics::newPage');
 $routes->get('/admin/topics/edit/(:any)', 'AdminTopics::editPage/$1');
@@ -70,6 +72,9 @@ $routes->post('/submit-answer', 'Home::submitAnswer');
 $routes->post('/admin/classes/saveNew', 'AdminClasses::saveNew');
 $routes->post('/admin/classes/delete', 'AdminClasses::delete');
 $routes->post('/admin/classes/update', 'AdminClasses::update');
+$routes->post('/admin/grades/saveNew', 'AdminGrades::saveNew');
+$routes->post('/admin/grades/delete', 'AdminGrades::delete');
+$routes->post('/admin/grades/update', 'AdminGrades::update');
 $routes->post('/admin/dashboard/viewReport', 'AdminDashboard::viewReport');
 $routes->post('/admin/dashboard/class-topics-report', 'AdminDashboard::getClassTopicsReport');
 $routes->post('/get-question', 'Home::getQuestion');

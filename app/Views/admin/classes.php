@@ -182,37 +182,65 @@
 
             $("#sendEmailBtn").attr('data-content', $("#sendEmailBtn").html()).html('<i class="fa fa-spinner fa-spin"></i>').css('pointer-events', 'none');
 
-            let formData = new FormData();
-            formData.append('class_id', classId);
-            formData.append('start_date', startDate);
-            formData.append('end_date', endDate);
+            try {
 
-            let response = await ajaxCall({
-                url: baseUrl + '/class/send-email',
-                data: formData,
-                csrfHeader: '<?= csrf_header() ?>',
-                csrfHash: '<?= csrf_hash() ?>'
-            });
+                let formData = new FormData();
+                formData.append('class_id', classId);
+                formData.append('start_date', startDate);
+                formData.append('end_date', endDate);
 
-            if (response.status == 'success') {
-                $("#sendingEmailModal").modal('hide');
-
-                // reset the start and end date
-                $("#startDate").val('');
-                $("#endDate").val('');
-
-                new Notify({
-                    title: 'Success',
-                    text: 'Emails sent successfully',
-                    status: 'success',
-                    autoclose: true,
-                    autotimeout: 3000
+                let response = await ajaxCall({
+                    url: baseUrl + '/class/send-email',
+                    data: formData,
+                    csrfHeader: '<?= csrf_header() ?>',
+                    csrfHash: '<?= csrf_hash() ?>'
                 });
+
+                if (response.status == 'success') {
+                    $("#sendingEmailModal").modal('hide');
+
+                    // reset the start and end date
+                    $("#startDate").val('');
+                    $("#endDate").val('');
+
+                    new Notify({
+                        title: 'Success',
+                        text: 'Emails sent successfully',
+                        status: 'success',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+                }
+                else {
+                    new Notify({
+                        title: 'Error',
+                        text: response.message,
+                        status: 'error',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+                }
             }
-            else {
+            catch (error) {
+                if (error.status == 401) {
+                    new Notify({
+                        title: 'Error',
+                        text: "Your session has expired. Redirecting to login page...",
+                        status: 'error',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                    
+                    return;
+                }
+
                 new Notify({
                     title: 'Error',
-                    text: response.message,
+                    text: error.responseJSON.message || 'Something went wrong',
                     status: 'error',
                     autoclose: true,
                     autotimeout: 3000

@@ -59,6 +59,17 @@ class UserModel extends Model
         return $results;
     }
 
+    public function getStudentsByGradeId($gradeId)
+    {
+        $db = db_connect();
+
+        $sql = "SELECT * FROM users INNER JOIN users_meta ON users.id = users_meta.user_id WHERE users_meta.meta_key = 'studentGradeId' AND users_meta.meta_value = ?";
+        
+        $results = $db->query($sql, [$gradeId])->getResultArray();
+        
+        return $results;
+    }
+
     public function insertUserMeta($metaKey, $metaValue, $userId)
     {
 

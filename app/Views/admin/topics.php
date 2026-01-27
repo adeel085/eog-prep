@@ -246,10 +246,26 @@
                     });
                 }
             }
-            catch (err) {
+            catch (error) {
+                if (error.status == 401) {
+                    new Notify({
+                        title: 'Error',
+                        text: "Your session has expired. Redirecting to login page...",
+                        status: 'error',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                    
+                    return;
+                }
+
                 new Notify({
                     title: 'Error',
-                    text: err.responseJSON.message || 'Something went wrong',
+                    text: error.responseJSON.message || 'Something went wrong',
                     status: 'error',
                     autoclose: true,
                     autotimeout: 3000
@@ -340,10 +356,26 @@
                     });
                 }
             }
-            catch (err) {
+            catch (error) {
+                if (error.status == 401) {
+                    new Notify({
+                        title: 'Error',
+                        text: "Your session has expired. Redirecting to login page...",
+                        status: 'error',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                    
+                    return;
+                }
+                
                 new Notify({
                     title: 'Error',
-                    text: err.responseJSON.message || 'Something went wrong',
+                    text: error.responseJSON.message || 'Something went wrong',
                     status: 'error',
                     autoclose: true,
                     autotimeout: 3000

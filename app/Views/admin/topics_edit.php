@@ -89,7 +89,24 @@
                         autotimeout: 3000
                     });
                 }
-            } catch (error) {
+            }
+            catch (error) {
+                if (error.status == 401) {
+                    new Notify({
+                        title: 'Error',
+                        text: "Your session has expired. Redirecting to login page...",
+                        status: 'error',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                    
+                    return;
+                }
+                
                 new Notify({
                     title: 'Error',
                     text: error.responseJSON.message || 'Something went wrong',

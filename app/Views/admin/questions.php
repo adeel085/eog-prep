@@ -71,6 +71,7 @@
                                 <th>Question Type</th>
                                 <th style="max-width: 200px;">Topics</th>
                                 <th>Question</th>
+                                <th>Grade</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -104,6 +105,16 @@
                                         ?>
                                     </td>
                                     <td><?= strip_tags($question['question_html']) ?></td>
+                                    <td>
+                                        <?php
+                                        if ($question['grade']) {
+                                            echo $question['grade']['name'];
+                                        }
+                                        else {
+                                            echo '<span class="text-muted">No grade associated</span>';
+                                        }
+                                        ?>
+                                    </td>
                                     <td>
                                         <div class="d-flex justify-content-end table-action-btn" style="gap: 10px;">
                                             <?php
@@ -201,10 +212,26 @@
                     });
                 }
             }
-            catch (err) {
+            catch (error) {
+                if (error.status == 401) {
+                    new Notify({
+                        title: 'Error',
+                        text: "Your session has expired. Redirecting to login page...",
+                        status: 'error',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                    
+                    return;
+                }
+
                 new Notify({
                     title: 'Error',
-                    text: err.responseJSON.message || 'Something went wrong',
+                    text: error.responseJSON.message || 'Something went wrong',
                     status: 'error',
                     autoclose: true,
                     autotimeout: 3000
@@ -261,10 +288,26 @@
                     });
                 }
             }
-            catch (err) {
+            catch (error) {
+                if (error.status == 401) {
+                    new Notify({
+                        title: 'Error',
+                        text: "Your session has expired. Redirecting to login page...",
+                        status: 'error',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                    
+                    return;
+                }
+
                 new Notify({
                     title: 'Error',
-                    text: err.responseJSON.message || 'Something went wrong',
+                    text: error.responseJSON.message || 'Something went wrong',
                     status: 'error',
                     autoclose: true,
                     autotimeout: 3000
@@ -309,10 +352,26 @@
                     });
                 }
             }
-            catch (err) {
+            catch (error) {
+                if (error.status == 401) {
+                    new Notify({
+                        title: 'Error',
+                        text: "Your session has expired. Redirecting to login page...",
+                        status: 'error',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                    
+                    return;
+                }
+                
                 new Notify({
                     title: 'Error',
-                    text: err.responseJSON.message || 'Something went wrong',
+                    text: error.responseJSON.message || 'Something went wrong',
                     status: 'error',
                     autoclose: true,
                     autotimeout: 3000
