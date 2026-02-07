@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use App\Models\GradeModel;
 use App\Models\UserModel;
+use App\Models\TopicModel;
 use App\Models\QuestionModel;
 
 class AdminGrades extends BaseController
@@ -79,6 +80,7 @@ class AdminGrades extends BaseController
         $gradeModel = new GradeModel();
         $userModel = new UserModel();
         $questionModel = new QuestionModel();
+        $topicModel = new TopicModel();
 
         if (!$gradeModel->find($gradeId)) {
             return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Grade not found']);
@@ -86,6 +88,7 @@ class AdminGrades extends BaseController
 
         $gradeModel->delete($gradeId);
 
+        $topicModel->set('grade_id', null)->where('grade_id', $gradeId)->update();
         $questionModel->set('grade_id', null)->where('grade_id', $gradeId)->update();
 
         $students = $userModel->getStudentsByGradeId($gradeId);
