@@ -29,6 +29,18 @@
 
                     <div class="col-sm-6">
                         <div class="form-group">
+                            <label for="gradeId">Grade</label>
+                            <select class="form-control" id="gradeId" name="gradeId">
+                                <option value="" selected>Select Grade</option>
+                                <?php foreach ($grades as $grade) : ?>
+                                    <option value="<?= $grade['id'] ?>"><?= $grade['name'] ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
                             <label for="tutorialLink">Tutorial Link (YouTube)</label>
                             <input type="text" class="form-control" id="tutorialLink">
                         </div>
@@ -51,6 +63,7 @@
         $('#saveBtn').click(async function(e) {
             
             let name = $('#name').val().trim();
+            let gradeId = $('#gradeId').val();
             let tutorialLink = $('#tutorialLink').val().trim();
 
             if (!name) {
@@ -60,6 +73,7 @@
             try {
                 let formData = new FormData();
                 formData.append('name', name);
+                formData.append('gradeId', gradeId);
                 formData.append('tutorialLink', tutorialLink);
 
                 $(this).attr('data-content', $(this).html()).html('<i class="fa fa-spinner fa-spin"></i>').css('pointer-events', 'none');

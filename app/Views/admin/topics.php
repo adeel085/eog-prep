@@ -86,13 +86,29 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
-                <div class="d-flex justify-content-end align-items-center mb-4" style="gap: 10px;">
-                    <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#topicWizardModal">
-                        <i class="fa fa-hat-wizard"></i> Topic Wizard
-                    </button>
-                    <a href="<?= base_url('/admin/topics/new') ?>" class="btn btn-sm btn-primary">
-                        <i class="fa fa-plus"></i> New Topic
-                    </a>
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap" style="gap: 10px;">
+                    <div class="d-flex align-items-center" style="gap: 10px;">
+                        <label class="mb-0" for="gradeFilter">Filter by Grade:</label>
+                        <select class="form-control form-control-sm" id="gradeFilter" style="width: auto;">
+                            <option value="">All Grades</option>
+                            <?php foreach ($grades as $grade) : ?>
+                                <option value="<?= $grade['id'] ?>" <?= (isset($filterGradeId) && $filterGradeId == $grade['id']) ? 'selected' : '' ?>><?= $grade['name'] ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <?php if (!empty($filterGradeId)) : ?>
+                            <a href="<?= base_url('/admin/topics') ?>" class="btn btn-sm btn-outline-secondary">
+                                <i class="fa fa-times"></i> Clear Filter
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                    <div class="d-flex align-items-center" style="gap: 10px;">
+                        <button class="btn btn-sm btn-primary" data-toggle="modal" data-target="#topicWizardModal">
+                            <i class="fa fa-hat-wizard"></i> Topic Wizard
+                        </button>
+                        <a href="<?= base_url('/admin/topics/new') ?>" class="btn btn-sm btn-primary">
+                            <i class="fa fa-plus"></i> New Topic
+                        </a>
+                    </div>
                 </div>
 
                 <div class="table-responsive">
@@ -141,6 +157,11 @@
     }
 
     $(() => {
+
+        $("#gradeFilter").change(function() {
+            let gradeId = $(this).val();
+            window.location.href = baseUrl + 'admin/topics?gradeId=' + gradeId;
+        });
 
         $("#topicWizardCreateBtn").click(async function(e) {
 

@@ -6,6 +6,7 @@ use App\Models\UserModel;
 use App\Models\TopicModel;
 use App\Models\QuestionModel;
 use App\Models\TopicQuestionsModel;
+use App\Models\GradeModel;
 
 class AdminTopics extends BaseController
 {
@@ -19,20 +20,34 @@ class AdminTopics extends BaseController
             return redirect()->to(base_url('/'));
         }
 
+        $filterGradeId = $this->request->getGet('gradeId');
+
         $topicModel = new TopicModel();
         $userModel = new UserModel();
+        $gradeModel = new GradeModel();
+
+        $grades = $gradeModel->findAll();
         
         if ($this->user['user_type'] == 'admin') {
-            $topics = $topicModel->where('owner_id', $this->user['id'])->findAll();
+            $topics = $topicModel->where('owner_id', $this->user['id']);
         }
         else {
             $adminUser = $userModel->where('user_type', 'admin')->first();
-            $topics = $topicModel->where('owner_id', $adminUser['id'])->orWhere('owner_id', $this->user['id'])->findAll();
+            $topics = $topicModel->where('owner_id', $adminUser['id'])->orWhere('owner_id', $this->user['id']);
+        }
+
+        if ($filterGradeId) {
+            $topics = $topics->where('grade_id', $filterGradeId)->findAll();
+        }
+        else {
+            $topics = $topics->findAll();
         }
 
         return view('admin/topics', [
             'pageTitle' => 'Topics',
             'topics' => $topics,
+            'grades' => $grades,
+            'filterGradeId' => $filterGradeId,
             'flashData' => $this->session->getFlashdata(),
             'user' => $this->user
         ]);
@@ -48,10 +63,14 @@ class AdminTopics extends BaseController
             return redirect()->to(base_url('/'));
         }
 
+        $gradeModel = new GradeModel();
+        $grades = $gradeModel->findAll();
+
         return view('admin/topics_new', [
             'pageTitle' => 'New Topic',
             'flashData' => $this->session->getFlashdata(),
-            'user' => $this->user
+            'user' => $this->user,
+            'grades' => $grades
         ]);
     }
 
@@ -66,6 +85,7 @@ class AdminTopics extends BaseController
         }
 
         $name = $this->request->getPost('name');
+        $gradeId = $this->request->getPost('gradeId');
         $tutorialLink = $this->request->getPost('tutorialLink');
         $questionIds = $this->request->getPost('questionIds');
 
@@ -78,6 +98,18 @@ class AdminTopics extends BaseController
         }
 
         $topicModel = new TopicModel();
+        $gradeModel = new GradeModel();
+
+        if ($gradeId) {
+            $grade = $gradeModel->find($gradeId);
+
+            if (!$grade) {
+                return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Grade not found']);
+            }
+        }
+        else {
+            $gradeId = null;
+        }
 
         $topic = $topicModel->where('name', $name)->first();
 
@@ -88,6 +120,7 @@ class AdminTopics extends BaseController
         $topicId = $topicModel->insert([
             'name' => $name,
             'tutorial_link' => $tutorialLink,
+            'grade_id' => $gradeId,
             'owner_id' => $this->user['id']
         ], true);
 
@@ -193,8 +226,10 @@ class AdminTopics extends BaseController
         }
 
         $topicModel = new TopicModel();
+        $gradeModel = new GradeModel();
 
         $topic = $topicModel->find($id);
+        $grades = $gradeModel->findAll();
 
         if (!$topic || $topic['owner_id'] != $this->user['id']) {
             return redirect()->to(base_url('/admin/topics'));
@@ -203,6 +238,7 @@ class AdminTopics extends BaseController
         return view('admin/topics_edit', [
             'pageTitle' => 'Edit Topic',
             'topic' => $topic,
+            'grades' => $grades,
             'flashData' => $this->session->getFlashdata(),
             'user' => $this->user
         ]);
@@ -220,6 +256,7 @@ class AdminTopics extends BaseController
 
         $id = $this->request->getPost('id');
         $name = $this->request->getPost('name');
+        $gradeId = $this->request->getPost('gradeId');
         $tutorialLink = $this->request->getPost('tutorialLink');
 
         if (!$id || !$name) {
@@ -231,6 +268,18 @@ class AdminTopics extends BaseController
         }
 
         $topicModel = new TopicModel();
+        $gradeModel = new GradeModel();
+
+        if ($gradeId) {
+            $grade = $gradeModel->find($gradeId);
+
+            if (!$grade) {
+                return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Grade not found']);
+            }
+        }
+        else {
+            $gradeId = null;
+        }
 
         $topic = $topicModel->find($id);
 
@@ -246,6 +295,7 @@ class AdminTopics extends BaseController
 
         $topicModel->update($id, [
             'name' => $name,
+            'grade_id' => $gradeId,
             'tutorial_link' => $tutorialLink,
         ]);
 

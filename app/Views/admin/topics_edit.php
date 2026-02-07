@@ -29,6 +29,18 @@
 
                     <div class="col-sm-6">
                         <div class="form-group">
+                            <label for="gradeId">Grade</label>
+                            <select class="form-control" id="gradeId" name="gradeId">
+                                <option value="" selected>Select Grade</option>
+                                <?php foreach ($grades as $grade) : ?>
+                                    <option value="<?= $grade['id'] ?>" <?= $topic['grade_id'] == $grade['id'] ? 'selected' : '' ?>><?= $grade['name'] ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="form-group">
                             <label for="tutorialLink">Tutorial Link (YouTube)</label>
                             <input type="text" class="form-control" id="tutorialLink" value="<?= $topic['tutorial_link'] ?>">
                         </div>
@@ -54,6 +66,7 @@
             
             let id = $('#id').val();
             let name = $('#name').val().trim();
+            let gradeId = $('#gradeId').val();
             let tutorialLink = $('#tutorialLink').val().trim();
 
             if (!name) {
@@ -65,6 +78,7 @@
 
                 formData.append('id', id);
                 formData.append('name', name);
+                formData.append('gradeId', gradeId);
                 formData.append('tutorialLink', tutorialLink);
                 
                 $(this).attr('data-content', $(this).html()).html('<i class="fa fa-spinner fa-spin"></i>').css('pointer-events', 'none');

@@ -17,5 +17,5 @@ class TopicModel extends Model
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
     protected $dateFormat = 'datetime';
-    protected $allowedFields = ['name', 'tutorial_link', 'owner_id'];
+    protected $allowedFields = ['name', 'tutorial_link', 'owner_id', 'grade_id'];
 }
