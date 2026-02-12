@@ -238,6 +238,15 @@
                             </a>
                         </div>
                     </li>
+
+                    <li>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="<?= base_url('/admin/worksheets') ?>">
+                                <i class="fa fa-file-alt navbar-icon"></i>
+                                <span>Worksheets</span>
+                            </a>
+                        </div>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -700,6 +709,18 @@
             title: 'Success',
             text: 'Grade updated successfully',
             status: 'success',
+            autoclose: true,
+            autotimeout: 3000
+        });
+    </script>
+    <?php endif; ?>
+
+    <?php if (isset($flashData['status']) && $flashData['status'] == 'no_questions_found_worksheet'): ?>
+    <script>
+        new Notify({
+            title: 'Warning',
+            text: 'No questions found for the selected grade, topic and level',
+            status: 'warning',
             autoclose: true,
             autotimeout: 3000
         });

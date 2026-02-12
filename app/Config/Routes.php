@@ -50,6 +50,8 @@ $routes->get('/page-selection', 'Home::pageSelection');
 $routes->get('/progress', 'Home::progressPage');
 $routes->get('/history', 'Home::historyPage');
 $routes->get('/admin/preferences', 'AdminPreferences::index');
+$routes->get('/admin/worksheets', 'AdminWorksheets::index');
+$routes->get('/admin/worksheets/print', 'AdminWorksheets::print');
 
 $routes->post('/admin/login', 'AdminLogin::login');
 $routes->post('/admin/students/saveNew', 'AdminStudents::saveNew');
