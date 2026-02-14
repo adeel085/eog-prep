@@ -116,6 +116,7 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Grade</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -123,6 +124,7 @@
                             <?php foreach ($topics as $topic) : ?>
                                 <tr data-id="<?= $topic['id'] ?>">
                                     <td><?= $topic['name'] ?></td>
+                                    <td><?= $topic['grade'] ? $topic['grade']['name'] : '<span class="text-muted">No grade associated</span>' ?></td>
                                     <td>
                                         <div class="d-flex justify-content-end table-action-btn" style="gap: 10px;">
                                             <a href="<?= base_url('/admin/topics/' . $topic['id'] . '/questions') ?>" class="table-action-btn" data-toggle="tooltip" title="Questions List">

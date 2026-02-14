@@ -43,6 +43,15 @@ class AdminTopics extends BaseController
             $topics = $topics->findAll();
         }
 
+        foreach ($topics as &$topic) {
+            if ($topic['grade_id']) {
+                $topic['grade'] = $gradeModel->find($topic['grade_id']);
+            }
+            else {
+                $topic['grade'] = null;
+            }
+        }
+
         return view('admin/topics', [
             'pageTitle' => 'Topics',
             'topics' => $topics,

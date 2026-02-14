@@ -41,6 +41,12 @@ class Home extends BaseController
         $topicQuestionsModel = new TopicQuestionsModel();
         $questionAnswersModel = new QuestionAnswersModel();
 
+        $userGradeId = $userModel->getUserMeta('studentGradeId', $this->user['id'], true);
+
+        if ($userGradeId && $topic['grade_id'] != $userGradeId) {
+            return redirect()->to(base_url('/'));
+        }
+
         $topicQuestions = $topicQuestionsModel->where('topic_id', $topicId)->findAll();
 
         $questionsIds = [];
@@ -83,8 +89,11 @@ class Home extends BaseController
             return redirect()->to(base_url('/'));
         }
 
+        $userModel = new UserModel();
+        $userGradeId = $userModel->getUserMeta('studentGradeId', $this->user['id'], true);
+
         $topicModel = new TopicModel();
-        $topics = $topicModel->findAll();
+        $topics = $topicModel->where('grade_id', $userGradeId)->findAll();
 
         return view('page_selection', [
             'pageTitle' => 'Page Selection',
