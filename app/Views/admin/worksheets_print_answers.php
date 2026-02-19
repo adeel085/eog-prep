@@ -1,11 +1,5 @@
 <?php
 
-$columns = 1;
-if (isset($_GET['cols'])) {
-	$columns = abs((int)$_GET['cols']);
-	$columns = $columns ? $columns : 1;
-}
-
 $allowed_paper_sizes = ["letter", "tabloid", "a0", "a1", "a2", "a3", "a4", "a5"];
 $paper_size = "letter";
 $paper_height = 27.94;
@@ -124,22 +118,23 @@ function cm_to_px($centi)
 		?>
 			<div class="template" style="margin-bottom: 30px;">
 				<b><?= "Question " . ($index + 1) ?>:</b>
-				<?= $problem['question_html'] ?>
+				<div><?= $problem['question_html'] ?></div>
 
 				<?php
 				if ($problem['question_type'] == "mcq") {
 
 					foreach ($problem['answers'] as $choice) {
-				?>
+					?>
 						<div class="mcq-option-div">
 							<input type="radio"> <?= strip_tags(html_entity_decode($choice['answer'])) ?>
 						</div>
-				<?php
+					<?php
 					}
 				}
 				?>
 
                 <b><?= "Answer " . ($index + 1) ?>:</b>
+				<div>
 				<?php
 				if ($problem['question_type'] == "mcq") {
 
@@ -163,6 +158,7 @@ function cm_to_px($centi)
 				<?php
 				}
 				?>
+				</div>
 			</div>
 		<?php
 		}

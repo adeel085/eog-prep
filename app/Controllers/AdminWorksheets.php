@@ -21,13 +21,15 @@ class AdminWorksheets extends BaseController
             return redirect()->to(base_url('/'));
         }
 
-        $filterGradeId = $this->request->getGet('gradeId');
-
         $userModel = new UserModel();
         $topicModel = new TopicModel();
         $gradeModel = new GradeModel();
 
         $grades = $gradeModel->findAll();
+
+        foreach ($grades as &$grade) {
+            $grade['topics'] = $topicModel->where('grade_id', $grade['id'])->findAll();
+        }
         
         if ($this->user['user_type'] == 'admin') {
             $topics = $topicModel->where('owner_id', $this->user['id']);
@@ -37,20 +39,98 @@ class AdminWorksheets extends BaseController
             $topics = $topicModel->where('owner_id', $adminUser['id'])->orWhere('owner_id', $this->user['id']);
         }
 
-        if ($filterGradeId) {
-            $topics = $topics->where('grade_id', $filterGradeId)->findAll();
-        }
-        else {
-            $topics = $topics->findAll();
-        }
+        $topics = $topics->findAll();
 
         return view('admin/worksheets', [
             'pageTitle' => 'Worksheets',
             'topics' => $topics,
             'grades' => $grades,
-            'filterGradeId' => $filterGradeId,
             'flashData' => $this->session->getFlashdata(),
             'user' => $this->user
+        ]);
+    }
+
+    public function getQuestions()
+    {
+        if (!$this->user) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Unauthorized'
+            ]);
+        }
+
+        if ($this->user['user_type'] != 'admin') {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'Forbidden'
+            ]);
+        }
+
+        $criteria = $this->request->getPost('criteria') ?? [];
+
+        if (!empty($criteria)) {
+            $criteria = json_decode($criteria, true);
+        }
+        else {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'No criteria provided'
+            ]);
+        }
+
+        $questionModel = new QuestionModel();
+        $topicQuestionsModel = new TopicQuestionsModel();
+
+        $questions = [];
+
+        foreach ($criteria as $criterion) {
+
+            $gradeId = $criterion['gradeId'];
+            $topicId = $criterion['topicId'];
+            $level1QuestionsCount = (int)$criterion['level1QuestionsCount'];
+            $level2QuestionsCount = (int)$criterion['level2QuestionsCount'];
+            $level3QuestionsCount = (int)$criterion['level3QuestionsCount'];
+
+            $topicQuestions = $topicQuestionsModel->select('question_id')->where('topic_id', $topicId)->findAll();
+
+            $questionsIds = [];
+            foreach ($topicQuestions as $topicQuestion) {
+                $questionsIds[] = $topicQuestion['question_id'];
+            }
+
+            if (empty($questionsIds)) {
+                continue;
+            }
+
+            if (!empty($gradeId)) {
+                $questions = array_merge($questions, $questionModel->select('id')->whereIn('id', $questionsIds)->where('grade_id', $gradeId)->where('level', 1)->limit($level1QuestionsCount)->findAll());
+                $questions = array_merge($questions, $questionModel->select('id')->whereIn('id', $questionsIds)->where('grade_id', $gradeId)->where('level', 2)->limit($level2QuestionsCount)->findAll());
+                $questions = array_merge($questions, $questionModel->select('id')->whereIn('id', $questionsIds)->where('grade_id', $gradeId)->where('level', 3)->limit($level3QuestionsCount)->findAll());
+            }
+            else {
+                $questions = array_merge($questions, $questionModel->select('id')->whereIn('id', $questionsIds)->where('level', 1)->limit($level1QuestionsCount)->findAll());
+                $questions = array_merge($questions, $questionModel->select('id')->whereIn('id', $questionsIds)->where('level', 2)->limit($level2QuestionsCount)->findAll());
+                $questions = array_merge($questions, $questionModel->select('id')->whereIn('id', $questionsIds)->where('level', 3)->limit($level3QuestionsCount)->findAll());
+            }   
+        }
+
+        if (count($questions) == 0) {
+            return $this->response->setJSON([
+                'status' => 'error',
+                'message' => 'No questions found for the given criteria'
+            ]);
+        }
+
+        $questionsIds = [];
+        foreach ($questions as $question) {
+            $questionsIds[] = $question['id'];
+        }
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'data' => [
+                'questionsIds' => $questionsIds
+            ]
         ]);
     }
 
@@ -64,13 +144,17 @@ class AdminWorksheets extends BaseController
             return redirect()->to(base_url('/'));
         }
 
-        $gradeId = $this->request->getGet('gradeId');
-        $topicId = $this->request->getGet('topicId');
-        $level = $this->request->getGet('level');
-        $columns = $this->request->getGet('columns');
+        $questionsIds = $this->request->getGet('questionsIds');
+        $worksheetTitle = $this->request->getGet('worksheetTitle');
         $paperSize = $this->request->getGet('paperSize');
-        $worksheetTitle = $this->request->getGet('title');
-        $includeAnswers = $this->request->getGet('answers');
+        $columns = $this->request->getGet('columns');
+        $includeAnswers = $this->request->getGet('includeAnswers');
+
+        if (empty($questionsIds)) {
+            return redirect()->to(base_url('/admin/worksheets'));
+        }
+
+        $questionsIdsArray = explode(',', $questionsIds);
 
         if (empty($columns)) {
             $columns = 1;
@@ -83,44 +167,14 @@ class AdminWorksheets extends BaseController
         if (empty($worksheetTitle)) {
             $worksheetTitle = 'Worksheet';
         }
-
-        if (!$topicId || !$level) {
-            return redirect()->to(base_url('/admin/worksheets'));
-        }
-
-        $topicModel = new TopicModel();
-        $topic = $topicModel->find($topicId);
-
-        if (!$topic) {
-            return redirect()->to(base_url('/admin/worksheets'));
-        }
-
+        
         $questionModel = new QuestionModel();
-        $topicQuestionsModel = new TopicQuestionsModel();
         $questionAnswersModel = new QuestionAnswersModel();
 
-        $topicQuestions = $topicQuestionsModel->where('topic_id', $topicId)->findAll();
-
-        $questionsIds = [];
-        foreach ($topicQuestions as $topicQuestion) {
-            $questionsIds[] = $topicQuestion['question_id'];
-        }
-
-        if ($gradeId) {
-            $questions = $questionModel->whereIn('id', $questionsIds)->where('level', $level)->where('grade_id', $gradeId)->findAll();
-        }
-        else {
-            $questions = $questionModel->whereIn('id', $questionsIds)->where('level', $level)->findAll();
-        }
-
-        if (count($questions) == 0) {
-            $this->session->setFlashdata('status', 'no_questions_found_worksheet');
-            return redirect()->to(base_url('/admin/worksheets'));
-        }
+        $questions = $questionModel->whereIn('id', $questionsIdsArray)->findAll();
 
         foreach ($questions as &$question) {
-            $answers = $questionAnswersModel->where('question_id', $question['id'])->findAll();
-            $question['answers'] = $answers;
+            $question['answers'] = $questionAnswersModel->where('question_id', $question['id'])->findAll();
         }
 
         if (!empty($includeAnswers) && $includeAnswers == 1) {

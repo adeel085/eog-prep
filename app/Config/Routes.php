@@ -99,3 +99,4 @@ $routes->post('/login', 'Login::login');
 $routes->post('/signup-user', 'Signup::signupUser');
 
 $routes->post('/admin/preferences/save', 'AdminPreferences::save');
+$routes->post('/admin/worksheets/get-questions', 'AdminWorksheets::getQuestions');

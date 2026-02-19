@@ -60,7 +60,7 @@
 				</div>
 			</div>
 			<div class="modal-footer">
-				<a target="_blank" href="<?= base_url('admin/worksheets/print') ?>" id="printLink" class="btn btn-sm btn-outline-primary">Print</a>
+				<a target="_blank" href="#" id="printLink" class="btn btn-sm btn-outline-primary">Print</a>
 				<button type="button" class="grey-bg pt-1 pb-1 pl-2 pr-2 btn btn-sm btn-outline-danger" data-dismiss="modal">Cancel</button>
 			</div>
 		</div>
@@ -72,45 +72,30 @@
     <div class="col-12">
         <div class="card">
             <div class="card-body">
+                <div class="d-flex justify-content-end">
+                    <button class="btn btn-sm btn-primary" id="addRowBtn">
+                        <i class="fa fa-plus"></i> Add Row
+                    </button>
+                </div>
                 <!-- Form to select grade, topic and level -->
-                <form>
-                    <div class="form-group">
-                        <label for="grade">Grade</label>
-                        <select class="form-control" id="grade" name="grade">
-                            <option value="" selected>All Grades</option>
-                            <?php
-                            foreach ($grades as $grade) {
-                                ?>
-                                <option value="<?= $grade['id'] ?>" <?= (isset($filterGradeId) && $filterGradeId == $grade['id']) ? 'selected' : '' ?>><?= $grade['name'] ?></option>
-                                <?php
-                            }
-                            ?>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="topic">Topic <?= isset($filterGradeId) && !empty($filterGradeId) ? '<small class="text-muted">(showing topics for selected grade)</small>' : '' ?></label>
-                        <select class="form-control" id="topic" name="topic">
-                            <option value="" selected disabled>Select Topic</option>
-                            <?php
-                            foreach ($topics as $topic) {
-                                ?>
-                                <option value="<?= $topic['id'] ?>"><?= $topic['name'] ?></option>
-                                <?php
-                            }
-                            ?>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="level">Level</label>
-                        <select class="form-control" id="level" name="level">
-                            <option value="" selected disabled>Select Level</option>
-                            <option value="1">Level 1</option>
-                            <option value="2">Level 2</option>
-                            <option value="3">Level 3</option>
-                        </select>
-                    </div>
+                <form class="mt-4">
+                    <table class="table" id="rowsTable">
+                        <thead>
+                            <tr>
+                                <th>Grade</th>
+                                <th>Topic</th>
+                                <th>Level 1</th>
+                                <th>Level 2</th>
+                                <th>Level 3</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="no-rows-added">
+                                <td colspan="6" class="text-center">No rows added yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
                     <div class="form-group mb-4">
                         <div class="form-check">
@@ -133,20 +118,117 @@
 <?= $this->section('foot') ?>
 <script>
     $(document).ready(function() {
-        $("#grade").change(function() {
-            let gradeId = $(this).val();
-            window.location.href = baseUrl + 'admin/worksheets?gradeId=' + gradeId;
+
+        let topics = <?= json_encode($topics) ?>;
+        let grades = <?= json_encode($grades) ?>;
+
+        $("#addRowBtn").click(function() {
+            $("#rowsTable tbody").append(`
+                <tr>
+                    <td>
+                        <select class="form-control grade-select">
+                            <option value="" selected>All Grades</option>
+                            ${grades.map(grade => `<option value="${grade.id}">${grade.name}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-control topic-select">
+                            <option value="" disabled selected>-- Select Topic --</option>
+                            ${topics.map(topic => `<option value="${topic.id}">${topic.name}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control max-questions-l1" placeholder="Max Questions">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control max-questions-l2" placeholder="Max Questions">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control max-questions-l3" placeholder="Max Questions">
+                    </td>
+                    <td>
+                        <div class="text-right">
+                            <button type="button" class="btn btn-sm btn-danger remove-row-btn">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `);
+
+            $(".no-rows-added").css("display", "none");
         });
 
-        $("#generateWorksheetBtn").click(function() {
+        $(document).on("change", ".grade-select", function() {
+            let gradeId = $(this).val();
+            let grade = grades.find(grade => grade.id == gradeId);
+            
+            if (grade) {
+                $(this).closest("tr").find(".topic-select").html(`
+                    <option value="" disabled selected>-- Select Topic --</option>
+                    ${grade.topics.map(topic => `<option value="${topic.id}">${topic.name}</option>`).join('')}
+                `);
 
-            let topicId = $("#topic").val();
-            let level = $("#level").val();
+                if (grade.topics.length == 0) {
+                    new Notify({
+                        title: 'Warning',
+                        text: 'No topics found for the selected grade. Please select All Grades to see all topics.',
+                        status: 'warning',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+                    return;
+                }
+            }
+            else {
+                $(this).closest("tr").find(".topic-select").html(`
+                    <option value="" disabled selected>-- Select Topic --</option>
+                    ${topics.map(topic => `<option value="${topic.id}">${topic.name}</option>`).join('')}
+                `);
+            }
 
-            if (!topicId || !level) {
+            $(this).closest("tr").find(".topic-select").val("").trigger("change");
+        });
+
+        $(document).on("click", ".remove-row-btn", function() {
+            $(this).closest("tr").remove();
+
+            if ($("#rowsTable tbody tr").length == 1) {
+                $(".no-rows-added").css("display", "table-row");
+            }
+        });
+
+        $("#generateWorksheetBtn").click(async function() {
+
+            let criteria = [];
+
+            let error = null;
+
+            $("#rowsTable tbody tr:not(.no-rows-added)").each(function() {
+                let gradeId = $(this).find(".grade-select").val();
+                let topicId = $(this).find(".topic-select").val();
+                let level1QuestionsCount = $(this).find(".max-questions-l1").val();
+                let level2QuestionsCount = $(this).find(".max-questions-l2").val();
+                let level3QuestionsCount = $(this).find(".max-questions-l3").val();
+                
+                if (!topicId || !level1QuestionsCount || !level2QuestionsCount || !level3QuestionsCount) {
+                    error = "Please select a grade, topic and enter max questions for all levels";
+                    return;
+                }
+
+                criteria.push({
+                    gradeId: gradeId,
+                    topicId: topicId,
+                    level1QuestionsCount: level1QuestionsCount,
+                    level2QuestionsCount: level2QuestionsCount,
+                    level3QuestionsCount: level3QuestionsCount
+                });
+            });
+
+            if (error) {
                 new Notify({
                     title: 'Error',
-                    text: 'Please select a topic and level',
+                    text: error,
                     status: 'error',
                     autoclose: true,
                     autotimeout: 3000
@@ -154,37 +236,78 @@
                 return;
             }
 
-            $("#printCustomizationModal").modal("show");
-        });
+            try {
+                let formData = new FormData();
+                formData.append('criteria', JSON.stringify(criteria));
 
-        $("#columnsSelect, #paperSize, #worksheetTitle, #grade, #topic, #level, #includeAnswers").on("change keyup", function(e) {
+                let res = await ajaxCall({
+                    url: baseUrl + 'admin/worksheets/get-questions',
+                    data: formData,
+                    csrfHeader: '<?= csrf_header() ?>',
+                    csrfHash: '<?= csrf_hash() ?>'
+                });
 
-            let gradeId = $("#grade").val();
-            let topicId = $("#topic").val();
-            let level = $("#level").val();
-            let answers = $("#includeAnswers").is(":checked") ? 1 : 0;
+                if (res.status == 'success') {
 
-            if (!topicId || !level) {
-                return;
+                    window.questionsIds = res.data.questionsIds;
+                    updatePrintLink();
+
+                    $("#printCustomizationModal").modal("show");
+                }
+                else {
+                    new Notify({
+                        title: 'Error',
+                        text: res.message,
+                        status: 'error',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+                }
             }
+            catch (error) {
+                console.log(error);
+                if (error.status == 401) {
+                    new Notify({
+                        title: 'Error',
+                        text: "Your session has expired. Redirecting to login page...",
+                        status: 'error',
+                        autoclose: true,
+                        autotimeout: 3000
+                    });
+                    return;
+                }
 
-            let columns = $("#columnsSelect").val();
-            let paperSize = $("#paperSize").val();
-            let worksheetTitle = $("#worksheetTitle").val();
-
-            const params = new URLSearchParams({
-                cols: columns,
-                paperSize: paperSize,
-                title: worksheetTitle,
-                gradeId: gradeId,
-                topicId: topicId,
-                level: level,
-                answers: answers
-            });
-
-            let url = $("#printLink").attr("href").split("?")[0] + "?" + decodeURIComponent(params.toString());
-            $("#printLink").attr("href", url);
+                new Notify({
+                    title: 'Error',
+                    text: error.responseJSON.message || 'Something went wrong',
+                    status: 'error',
+                    autoclose: true,
+                    autotimeout: 3000
+                });
+            }
         });
+
+        $("#worksheetTitle, #paperSize, #columnsSelect, #includeAnswers").change(function() {
+            updatePrintLink();
+        });
+
+        function updatePrintLink() {
+            let worksheetTitle = $("#worksheetTitle").val();
+            let paperSize = $("#paperSize").val();
+            let columns = $("#columnsSelect").val();
+            let includeAnswers = $("#includeAnswers").is(":checked") ? 1 : 0;
+
+            let urlSearchParams = new URLSearchParams();
+            urlSearchParams.append('worksheetTitle', worksheetTitle);
+            urlSearchParams.append('paperSize', paperSize);
+            urlSearchParams.append('columns', columns);
+            urlSearchParams.append('includeAnswers', includeAnswers);
+            urlSearchParams.append('questionsIds', window.questionsIds.join(','));
+
+            $("#printLink").attr("href", baseUrl + 'admin/worksheets/print?' + urlSearchParams.toString());
+        }
     });
+
+    window.questionsIds = [];
 </script>
 <?= $this->endSection() ?>
