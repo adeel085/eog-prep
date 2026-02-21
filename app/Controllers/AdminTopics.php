@@ -25,6 +25,7 @@ class AdminTopics extends BaseController
         $topicModel = new TopicModel();
         $userModel = new UserModel();
         $gradeModel = new GradeModel();
+        $topicQuestionsModel = new TopicQuestionsModel();
 
         $grades = $gradeModel->findAll();
         
@@ -50,6 +51,10 @@ class AdminTopics extends BaseController
             else {
                 $topic['grade'] = null;
             }
+
+            $topic['level1QuestionsCount'] = $topicQuestionsModel->join('questions', 'topics_questions.question_id = questions.id')->where('questions.level', 1)->where('topics_questions.topic_id', $topic['id'])->countAllResults();
+            $topic['level2QuestionsCount'] = $topicQuestionsModel->join('questions', 'topics_questions.question_id = questions.id')->where('questions.level', 2)->where('topics_questions.topic_id', $topic['id'])->countAllResults();
+            $topic['level3QuestionsCount'] = $topicQuestionsModel->join('questions', 'topics_questions.question_id = questions.id')->where('questions.level', 3)->where('topics_questions.topic_id', $topic['id'])->countAllResults();
         }
 
         return view('admin/topics', [

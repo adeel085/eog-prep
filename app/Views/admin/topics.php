@@ -117,6 +117,9 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Grade</th>
+                                <th>Level 1 Questions</th>
+                                <th>Level 2 Questions</th>
+                                <th>Level 3 Questions</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -125,6 +128,9 @@
                                 <tr data-id="<?= $topic['id'] ?>">
                                     <td><?= $topic['name'] ?></td>
                                     <td><?= $topic['grade'] ? $topic['grade']['name'] : '<span class="text-muted">No grade associated</span>' ?></td>
+                                    <td><?= $topic['level1QuestionsCount'] ?></td>
+                                    <td><?= $topic['level2QuestionsCount'] ?></td>
+                                    <td><?= $topic['level3QuestionsCount'] ?></td>
                                     <td>
                                         <div class="d-flex justify-content-end table-action-btn" style="gap: 10px;">
                                             <a href="<?= base_url('/admin/topics/' . $topic['id'] . '/questions') ?>" class="table-action-btn" data-toggle="tooltip" title="Questions List">
