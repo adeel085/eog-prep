@@ -7,6 +7,8 @@ use App\Models\TopicModel;
 use App\Models\UserModel;
 use App\Models\ClassModel;
 use App\Models\StudentSessionResultModel;
+use App\Models\StudentQuestionsResultsModel;
+use App\Models\QuestionModel;
 
 class AdminDashboard extends BaseController
 {
@@ -177,6 +179,80 @@ class AdminDashboard extends BaseController
             'data' => [
                 'topics' => $topicsResponse,
                 'students_count' => count($studentIds)
+            ]
+        ]);
+    }
+
+    public function getClassMissedQuestions()
+    {
+        if (!$this->user) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+        }
+
+        if ($this->user['user_type'] != 'admin' && $this->user['user_type'] != 'teacher') {
+            return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Forbidden']);
+        }
+
+        $classId = $this->request->getPost('class_id');
+
+        if (!$classId) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Class ID is required']);
+        }
+
+        // Verify the class belongs to this teacher/admin
+        $classModel = new ClassModel();
+        $class = $classModel->where(['id' => $classId, 'owner_id' => $this->user['id']])->first();
+
+        if (!$class) {
+            return $this->response->setStatusCode(404)->setJSON(['status' => 'error', 'message' => 'Class not found']);
+        }
+
+        // Get all students in this class
+        $db = db_connect();
+        $studentsQuery = $db->query("
+            SELECT u.id 
+            FROM users u 
+            INNER JOIN users_meta um ON u.id = um.user_id 
+            WHERE um.meta_key = 'studentClassId' 
+            AND um.meta_value = ?
+            AND u.user_type = 'student'
+        ", [$classId]);
+        
+        $students = $studentsQuery->getResultArray();
+        $studentIds = array_column($students, 'id');
+
+        if (empty($studentIds)) {
+            return $this->response->setJSON([
+                'status' => 'success',
+                'data' => [
+                    'missed_questions' => []
+                ]
+            ]);
+        }
+
+        // Get top 5 most missed questions (is_correct = 0) for students in this class
+        $placeholders = implode(',', array_fill(0, count($studentIds), '?'));
+        $missedQuery = $db->query("
+            SELECT 
+                sqr.question_id,
+                COUNT(*) as miss_count,
+                q.question_html,
+                q.level
+            FROM students_questions_results sqr
+            INNER JOIN questions q ON sqr.question_id = q.id
+            WHERE sqr.student_id IN ($placeholders)
+            AND sqr.is_correct = 0
+            GROUP BY sqr.question_id
+            ORDER BY miss_count DESC
+            LIMIT 5
+        ", $studentIds);
+
+        $missedQuestions = $missedQuery->getResultArray();
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'data' => [
+                'missed_questions' => $missedQuestions
             ]
         ]);
     }

@@ -96,6 +96,7 @@
     let currentQuestionIndex = -1;
     let correctAnswers = 0;
     let totalQuestions = <?= count($questions) ?>;
+    let answeredQuestions = []; // Track all answered questions
 
     $(document).ready(async function() {
 
@@ -139,11 +140,19 @@
             }
 
             let correct = false;
+            let studentAnswerText = questionType == 'mcq' ? base64DecodeUnicode(selectedAnswer) : selectedAnswer;
 
             questions[currentQuestionIndex].answers.forEach(answer => {
-                if (answer.is_correct == 1 && (questionType == 'mcq' ? answer.answer == base64DecodeUnicode(selectedAnswer) : answer.answer == selectedAnswer)) {
+                if (answer.is_correct == 1 && answer.answer == studentAnswerText) {
                     correct = true;
                 }
+            });
+
+            // Track the answered question
+            answeredQuestions.push({
+                question_id: questionId,
+                student_answer: studentAnswerText,
+                is_correct: correct ? 1 : 0
             });
 
             if (correct) {
@@ -328,6 +337,7 @@
             formData.append('level', <?= $currentLevel ?>);
             formData.append('correct_count', correctAnswers);
             formData.append('total_questions', totalQuestions);
+            formData.append('answered_questions', JSON.stringify(answeredQuestions));
 
             const result = await ajaxCall({
                 url: baseUrl + '/home/store-session-result',

@@ -115,6 +115,7 @@ class Home extends BaseController
         $level = $this->request->getPost('level');
         $correctCount = $this->request->getPost('correct_count');
         $totalQuestions = $this->request->getPost('total_questions');
+        $answeredQuestionsJson = $this->request->getPost('answered_questions');
 
         if (!$topicId || !$level || $correctCount === null || !$totalQuestions) {
             return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Missing required parameters']);
@@ -129,6 +130,22 @@ class Home extends BaseController
             'level' => $level,
             'percentage' => $percentage
         ]);
+
+        // Save individual question results
+        if ($answeredQuestionsJson) {
+            $answeredQuestions = json_decode($answeredQuestionsJson, true);
+            if (is_array($answeredQuestions)) {
+                $studentQuestionsResultsModel = new StudentQuestionsResultsModel();
+                foreach ($answeredQuestions as $answered) {
+                    $studentQuestionsResultsModel->insert([
+                        'student_id' => $this->user['id'],
+                        'question_id' => $answered['question_id'],
+                        'student_answer' => $answered['student_answer'],
+                        'is_correct' => $answered['is_correct']
+                    ]);
+                }
+            }
+        }
 
         return $this->response->setJSON([
             'status' => 'success',

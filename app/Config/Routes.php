@@ -79,6 +79,7 @@ $routes->post('/admin/grades/delete', 'AdminGrades::delete');
 $routes->post('/admin/grades/update', 'AdminGrades::update');
 $routes->post('/admin/dashboard/viewReport', 'AdminDashboard::viewReport');
 $routes->post('/admin/dashboard/class-topics-report', 'AdminDashboard::getClassTopicsReport');
+$routes->post('/admin/dashboard/class-missed-questions', 'AdminDashboard::getClassMissedQuestions');
 $routes->post('/get-question', 'Home::getQuestion');
 $routes->post('/class/send-email', 'AdminClasses::sendEmailToParents');
 $routes->post('/admin/timer/save', 'AdminTimer::save');

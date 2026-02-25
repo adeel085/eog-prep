@@ -163,6 +163,46 @@
     .visually-hidden {
         display: none;
     }
+    /* Missed Questions Styles */
+    .missed-question-item {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 12px;
+        background: #fff;
+        transition: all 0.2s ease;
+    }
+    .missed-question-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .miss-count-badge {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 4px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .question-level-badge {
+        background-color: #e9ecef;
+        color: #495057;
+        padding: 3px 8px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+    }
+    .question-preview {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 12px;
+        margin-top: 10px;
+        font-size: 0.9rem;
+        max-height: 150px;
+        overflow-y: auto;
+    }
+    .question-preview img {
+        max-width: 100%;
+        height: auto;
+    }
 </style>
 <?= $this->endSection() ?>
 
@@ -209,7 +249,7 @@
     </div>
 
     <!-- Topics Report Area -->
-    <div class="col-md-9">
+    <div class="col-md-6">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">Topics Performance</h5>
@@ -220,6 +260,23 @@
                     <div class="empty-state">
                         <i class="ri-bar-chart-box-line"></i>
                         <p>Select a class to view topics performance</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Missed Questions Area -->
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Top 5 Missed Questions</h5>
+            </div>
+            <div class="card-body">
+                <div id="missedQuestionsContainer">
+                    <div class="empty-state">
+                        <i class="ri-question-line"></i>
+                        <p>Select a class to view missed questions</p>
                     </div>
                 </div>
             </div>
@@ -246,7 +303,7 @@
             // Update header
             $('#selectedClassName').text(className);
 
-            // Show loading
+            // Show loading for both sections
             $('#topicsReportContainer').html(`
                 <div class="loading-spinner">
                     <div class="spinner-border text-primary" role="status">
@@ -256,6 +313,21 @@
                 </div>
             `);
 
+            $('#missedQuestionsContainer').html(`
+                <div class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading...</p>
+                </div>
+            `);
+
+            // Load both topics and missed questions
+            loadTopicsReport(classId);
+            loadMissedQuestions(classId);
+        });
+
+        async function loadTopicsReport(classId) {
             try {
                 let formData = new FormData();
                 formData.append('class_id', classId);
@@ -270,30 +342,57 @@
                 if (result.status === 'success') {
                     renderTopicsReport(result.data);
                 } else {
-                    showError(result.message || 'Failed to load topics');
+                    showError('#topicsReportContainer', result.message || 'Failed to load topics');
                 }
             }
             catch (error) {
-                if (error.status == 401) {
-                    new Notify({
-                        title: 'Error',
-                        text: "Your session has expired. Redirecting to login page...",
-                        status: 'error',
-                        autoclose: true,
-                        autotimeout: 3000
-                    });
-
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2000);
-                    
-                    return;
-                }
-                
-                console.error('Error loading topics:', error);
-                showError('An error occurred while loading topics');
+                handleAjaxError(error, '#topicsReportContainer', 'Error loading topics');
             }
-        });
+        }
+
+        async function loadMissedQuestions(classId) {
+            try {
+                let formData = new FormData();
+                formData.append('class_id', classId);
+
+                const result = await ajaxCall({
+                    url: baseUrl + 'admin/dashboard/class-missed-questions',
+                    data: formData,
+                    csrfHeader: '<?= csrf_header() ?>',
+                    csrfHash: '<?= csrf_hash() ?>'
+                });
+
+                if (result.status === 'success') {
+                    renderMissedQuestions(result.data);
+                } else {
+                    showError('#missedQuestionsContainer', result.message || 'Failed to load missed questions');
+                }
+            }
+            catch (error) {
+                handleAjaxError(error, '#missedQuestionsContainer', 'Error loading missed questions');
+            }
+        }
+
+        function handleAjaxError(error, container, message) {
+            if (error.status == 401) {
+                new Notify({
+                    title: 'Error',
+                    text: "Your session has expired. Redirecting to login page...",
+                    status: 'error',
+                    autoclose: true,
+                    autotimeout: 3000
+                });
+
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+                
+                return;
+            }
+            
+            console.error(message, error);
+            showError(container, 'An error occurred');
+        }
 
         function renderTopicsReport(data) {
             const { topics, students_count } = data;
@@ -388,8 +487,46 @@
             return html;
         }
 
-        function showError(message) {
-            $('#topicsReportContainer').html(`
+        function renderMissedQuestions(data) {
+            const { missed_questions } = data;
+
+            if (missed_questions.length === 0) {
+                $('#missedQuestionsContainer').html(`
+                    <div class="empty-state">
+                        <i class="ri-checkbox-circle-line"></i>
+                        <p>No missed questions found</p>
+                    </div>
+                `);
+                return;
+            }
+
+            let html = '<div class="missed-questions-list">';
+
+            missed_questions.forEach((question, index) => {
+                html += `
+                    <div class="missed-question-item">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="question-level-badge">Level ${question.level}</span>
+                            <span class="miss-count-badge">${question.miss_count} miss${question.miss_count != 1 ? 'es' : ''}</span>
+                        </div>
+                        <div class="question-preview">
+                            ${question.question_html}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            $('#missedQuestionsContainer').html(html);
+
+            // Re-render MathJax if available
+            if (typeof MathJax !== 'undefined') {
+                MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('missedQuestionsContainer')]);
+            }
+        }
+
+        function showError(container, message) {
+            $(container).html(`
                 <div class="empty-state text-danger">
                     <i class="ri-error-warning-line"></i>
                     <p>${message}</p>
