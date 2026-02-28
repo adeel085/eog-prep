@@ -273,6 +273,15 @@
                 <h5 class="card-title mb-0">Top 5 Missed Questions</h5>
             </div>
             <div class="card-body">
+                <!-- Topic Filter -->
+                <div class="mb-3" id="topicFilterWrapper" style="display: none;">
+                    <select class="form-control form-contrtol-sm" id="topicFilter">
+                        <option value="all" selected>All Topics</option>
+                        <?php foreach ($topics as $topic): ?>
+                            <option value="<?= $topic['id'] ?>"><?= htmlspecialchars($topic['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <div id="missedQuestionsContainer">
                     <div class="empty-state">
                         <i class="ri-question-line"></i>
@@ -290,11 +299,15 @@
 <script>
     $(() => {
         const classes = <?= json_encode($classes) ?>;
+        let currentClassId = null; // Track currently selected class
 
         // Class click handler
         $('.class-list-item').click(async function() {
             const classId = $(this).data('class-id');
             const className = $(this).data('class-name');
+
+            // Update current class ID
+            currentClassId = classId;
 
             // Update active state
             $('.class-list-item').removeClass('active');
@@ -302,6 +315,10 @@
 
             // Update header
             $('#selectedClassName').text(className);
+
+            // Show topic filter and reset to "All Topics"
+            $('#topicFilterWrapper').show();
+            $('#topicFilter').val('all');
 
             // Show loading for both sections
             $('#topicsReportContainer').html(`
@@ -324,7 +341,23 @@
 
             // Load both topics and missed questions
             loadTopicsReport(classId);
-            loadMissedQuestions(classId);
+            loadMissedQuestions(classId, 'all');
+        });
+
+        // Topic filter change handler
+        $('#topicFilter').change(function() {
+            const topicId = $(this).val();
+            if (currentClassId) {
+                $('#missedQuestionsContainer').html(`
+                    <div class="loading-spinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading...</p>
+                    </div>
+                `);
+                loadMissedQuestions(currentClassId, topicId);
+            }
         });
 
         async function loadTopicsReport(classId) {
@@ -350,10 +383,11 @@
             }
         }
 
-        async function loadMissedQuestions(classId) {
+        async function loadMissedQuestions(classId, topicId = 'all') {
             try {
                 let formData = new FormData();
                 formData.append('class_id', classId);
+                formData.append('topic_id', topicId);
 
                 const result = await ajaxCall({
                     url: baseUrl + 'admin/dashboard/class-missed-questions',

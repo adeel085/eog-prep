@@ -17,5 +17,5 @@ class StudentQuestionsResultsModel extends Model
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
     protected $dateFormat = 'datetime';
-    protected $allowedFields = ['student_id', 'question_id', 'student_answer', 'is_correct'];
+    protected $allowedFields = ['id', 'student_id', 'question_id', 'student_answer', 'is_correct'];
 }

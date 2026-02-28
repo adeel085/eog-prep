@@ -24,6 +24,7 @@ class AdminDashboard extends BaseController
 
         $classModel = new ClassModel();
         $userModel = new UserModel();
+        $topicModel = new TopicModel();
 
         $classes = $classModel->where('owner_id', $this->user['id'])->findAll();
 
@@ -43,11 +44,15 @@ class AdminDashboard extends BaseController
                 }
             }
         }
+
+        // Get all topics for the filter dropdown
+        $topics = $topicModel->findAll();
         
         return view('admin/dashboard', [
             'pageTitle' => 'Admin Dashboard',
             'flashData' => $this->session->getFlashdata(),
             'classes' => $classes,
+            'topics' => $topics,
             'user' => $this->user
         ]);
     }
@@ -194,6 +199,7 @@ class AdminDashboard extends BaseController
         }
 
         $classId = $this->request->getPost('class_id');
+        $topicId = $this->request->getPost('topic_id'); // Optional topic filter
 
         if (!$classId) {
             return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Class ID is required']);
@@ -230,23 +236,49 @@ class AdminDashboard extends BaseController
             ]);
         }
 
-        // Get top 5 most missed questions (is_correct = 0) for students in this class
+        // Build query based on whether topic filter is applied
         $placeholders = implode(',', array_fill(0, count($studentIds), '?'));
-        $missedQuery = $db->query("
-            SELECT 
-                sqr.question_id,
-                COUNT(*) as miss_count,
-                q.question_html,
-                q.level
-            FROM students_questions_results sqr
-            INNER JOIN questions q ON sqr.question_id = q.id
-            WHERE sqr.student_id IN ($placeholders)
-            AND sqr.is_correct = 0
-            GROUP BY sqr.question_id
-            ORDER BY miss_count DESC
-            LIMIT 5
-        ", $studentIds);
+        $params = $studentIds;
+        
+        if ($topicId && $topicId !== 'all') {
+            // Filter by specific topic - join with topics_questions table
+            // Use COUNT(DISTINCT sqr.id) to avoid inflated counts from multiple topic associations
+            $sql = "
+                SELECT 
+                    sqr.question_id,
+                    COUNT(DISTINCT sqr.id) as miss_count,
+                    q.question_html,
+                    q.level
+                FROM students_questions_results sqr
+                INNER JOIN questions q ON sqr.question_id = q.id
+                INNER JOIN topics_questions tq ON q.id = tq.question_id
+                WHERE sqr.student_id IN ($placeholders)
+                AND sqr.is_correct = 0
+                AND tq.topic_id = ?
+                GROUP BY sqr.question_id
+                ORDER BY miss_count DESC
+                LIMIT 5
+            ";
+            $params[] = $topicId;
+        } else {
+            // No topic filter - get all missed questions
+            $sql = "
+                SELECT 
+                    sqr.question_id,
+                    COUNT(*) as miss_count,
+                    q.question_html,
+                    q.level
+                FROM students_questions_results sqr
+                INNER JOIN questions q ON sqr.question_id = q.id
+                WHERE sqr.student_id IN ($placeholders)
+                AND sqr.is_correct = 0
+                GROUP BY sqr.question_id
+                ORDER BY miss_count DESC
+                LIMIT 5
+            ";
+        }
 
+        $missedQuery = $db->query($sql, $params);
         $missedQuestions = $missedQuery->getResultArray();
 
         return $this->response->setJSON([
