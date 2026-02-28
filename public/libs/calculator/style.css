@@ -1,0 +1,172 @@
+/*============================
+  APP DESIGN
+============================*/
+#calculator {
+  min-height: 326px;
+  height: auto;
+  background-color: #1A1A1D;
+  display: grid;
+  padding: 5px;
+  grid-template: "s s s s" 1fr
+                 "a a a o" 1fr
+                 "n n n o" 1fr
+                 "n n n o" 1fr
+                 "n n n o" 1fr
+                 "n n n o" 1fr
+                 / 1fr 1fr 1fr 1fr;
+}
+
+/*============================
+  CALCULATOR SCREEN
+============================*/
+#calculator .screen {
+  width: 100%;
+  height: auto;
+  grid-area: s;
+  background-color: #1A1A1D;
+  border-radius: 10px 10px 0 0;
+  overflow: auto;
+}
+
+#calculator .screen p {
+  display: inline-block;
+  color: white;
+  text-align: right;
+  width: 100%;
+  font-size: 1.6rem;
+  user-select: none;
+  margin: 0;
+  font-family: 'Open Sans', sans-serif;
+}
+/*============================
+  CALCULATOR BUTTONS
+============================*/
+#calculator button {
+  border-radius: 50%;
+  width: 60%;
+  min-width: 45px;
+  height: auto;
+  outline: none;
+  color: white;
+  user-select: none;
+  border: 1px transparent solid;
+  transition: all 0.3s ease;
+  font-size: 22px;
+  font-family: 'Open Sans', sans-serif;
+}
+
+/*=== BUTTON CONTAINERS===*/
+#calculator .container {
+  justify-items: center;
+  grid-gap: 8px;
+  padding: 8px 0;
+}
+
+#calculator .aux {
+  grid-area: a;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding-bottom: 0;
+}
+
+#calculator .operators {
+  grid-area: o;
+  display: grid;
+  grid-template-rows: repeat(5, 1fr);
+}
+
+#calculator .numbers {
+  grid-area: n;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+}
+/*=== AUXILLARY BUTTONS===*/
+
+#calculator .auxillary {
+  background-color: #9f9fa1;
+  color: black;
+}
+
+#calculator .auxillary:active {
+  background-color: #d3d3d4;
+}
+/*=== OPERATOR BUTTONS===*/
+#calculator .operator {
+  background-color: #C3073F;
+}
+
+#calculator .operator:active {
+  background-color:#a03152;
+  color: white;
+}
+
+#calculator .op-clicked {
+  background-color: white;
+  color: #C3073F;
+}
+
+#calculator #division {
+  font-size: 1.3em;
+}
+/*=== NUMBER BUTTONS===*/
+#calculator .numbers button {
+  background-color: #4E4E50;
+}
+
+#calculator .numbers button:active {
+  background-color:  #a09e9e;
+  color: black;
+}
+
+#calculator #zero {
+  grid-column: span 2;
+  border-radius: 40px 40px;
+  min-width: 112px;
+  text-align: left;
+  text-indent: 15%;
+}
+
+/* My Custom CSS */
+#calculatorWidget {
+  max-width: 245px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 5px 8px 16px rgb(29, 25, 25);
+  top: calc(50% - 180px);
+  left: calc(50% - 120px);
+  position: absolute;
+}
+
+.calculator-window-controls {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background-color: #373737;
+  padding: 0 10px;
+}
+
+#calculatorWidgetCloseButton {
+  width: 12px;
+  height: 12px;
+  background-color: #ea5c30;
+  color: #831f0f;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+#calculatorWidgetCloseButton span {
+  display: block;
+  margin-top: 2px;
+  font-size: 14px;
+  visibility: hidden;
+  cursor: default;
+}
+
+#calculatorWidgetCloseButton:hover span {
+  visibility: visible;
+}

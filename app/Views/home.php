@@ -1,7 +1,12 @@
 <?= $this->extend('Layouts/default_2') ?>
 
 <?= $this->section('head') ?>
+<link rel="stylesheet" href="<?= base_url('public/libs/calculator/style.css') ?>" type="text/css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css" integrity="sha512-ELV+xyi8IhEApPS/pSj66+Jiw+sOT1Mqkzlh8ExXihe4zfqbWkxPRi8wptXIO9g73FSlhmquFlUOuMSoXz5IRw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>
+    body {
+        min-height: var(--app-height);
+    }
     .question-center {
         width: 600px;
         max-width: 100%;
@@ -42,10 +47,14 @@
             <div class="question-center">
 
                 <!-- Back button -->
-                <div class="d-flex justify-content-start mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
                     <a href="<?= base_url('page-selection') ?>" class="btn btn-secondary">
                         <i class="fa fa-arrow-left"></i> Quit Session
                     </a>
+
+                    <button class="btn btn-dark btn-primary" onclick="toggleCalculator(event)">
+                        <i class="fa fa-calculator"></i>
+                    </button>
                 </div>
                 
                 <div class="card mb-3">
@@ -87,10 +96,25 @@
     </div>
 </div>
 
+<!-- Calculator -->
+<div id="calculatorWidget" style="display: none;">
+    <div id="calculatorWidgetHeader">
+        <div class="calculator-window-controls">
+            <div id="calculatorWidgetCloseButton">
+                <span>&times;</span>
+            </div>
+        </div>
+    </div>
+    <div id="calculator"></div>
+</div>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('foot') ?>
 <script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js" integrity="sha512-57oZ/vW8ANMjR/KQ6Be9v/+/h6bq9/l3f0Oc7vn6qMqyhvPd1cvKBRWWpzu0QoneImqr2SkmO4MSqU+RpHom3Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="<?= base_url('public/libs/calculator/calculation.js') ?>"></script>
+<script src="<?= base_url('public/libs/calculator/calculator.js') ?>"></script>
 <script>
     let questions = <?= json_encode($questions) ?>;
     let currentQuestionIndex = -1;
@@ -116,6 +140,9 @@
 
         $("#submitBtn").click(async function() {
             
+            // Hide the calculator
+            $("#calculatorWidget").hide();
+
             let questionType = $("#questionType").val();
             let questionId = $("#questionId").val();
             let selectedAnswer = undefined;
@@ -125,7 +152,6 @@
             }
             else {
                 selectedAnswer = $('.question-item').find('.text-answer').val().trim();
-
             }
 
             if (selectedAnswer == undefined || selectedAnswer == '') {
@@ -192,6 +218,27 @@
 
         $('#nextQuestionBtn').click(async function() {
             showNextQuestion();
+        });
+
+        $("#calculatorWidget").draggable({
+            containment: "body",
+            handle: "#calculatorWidgetHeader",
+            start: () => {
+                $("#calculator").css(
+                    "pointer-events",
+                    "none"
+                );
+            },
+            stop: () => {
+                $("#calculator").css(
+                    "pointer-events",
+                    "auto"
+                );
+            },
+        });
+
+        $("#calculatorWidgetCloseButton").on("click", () => {
+            $("#calculatorWidget").hide();
         });
     });
 
@@ -495,6 +542,10 @@
     }
     else {
         console.warn('BroadcastChannel is not supported in this browser. Tab communication will not work.');
+    }
+
+    function toggleCalculator(e) {
+        $("#calculatorWidget").toggle();
     }
 </script>
 <?= $this->endSection() ?>
