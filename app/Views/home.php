@@ -36,6 +36,9 @@
         border-radius: 5px;
         border-left: 4px solid #007bff;
     }
+    #calculatorBtn {
+        display: none;
+    }
 </style>
 <?= $this->endSection() ?>
 
@@ -52,7 +55,7 @@
                         <i class="fa fa-arrow-left"></i> Quit Session
                     </a>
 
-                    <button class="btn btn-dark btn-primary" onclick="toggleCalculator(event)">
+                    <button class="btn btn-dark btn-primary" id="calculatorBtn">
                         <i class="fa fa-calculator"></i>
                     </button>
                 </div>
@@ -271,6 +274,21 @@
             'pointer-events': 'auto',
             'opacity': 1
         });
+
+        $("#calculatorBtn").off("click");
+        $("#calculatorBtn").on("click", function() {
+            if (question.calculator_enabled == 1) {
+                $("#calculatorWidget").show();
+            }
+        });
+
+        if (question.calculator_enabled == 1) {
+            $("#calculatorBtn").show();
+        }
+        else {
+            $("#calculatorBtn").hide();
+            $("#calculatorWidget").hide();
+        }
     }
 
     function renderQuestion(question) {
@@ -544,8 +562,8 @@
         console.warn('BroadcastChannel is not supported in this browser. Tab communication will not work.');
     }
 
-    function toggleCalculator(e) {
-        $("#calculatorWidget").toggle();
-    }
+    // function toggleCalculator(e) {
+    //     $("#calculatorWidget").toggle();
+    // }
 </script>
 <?= $this->endSection() ?>

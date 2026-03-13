@@ -102,6 +102,7 @@ class AdminQuestions extends BaseController
         $solution = $this->request->getPost('solution');
         $answers = json_decode(base64_decode($this->request->getPost('answers')));
         $correctAnswerIndex = (int) $this->request->getPost('correctAnswerIndex');
+        $calculatorEnabled = $this->request->getPost('calculatorEnabled');
 
         $questionModel = new QuestionModel();
         $topicQuestionsModel = new TopicQuestionsModel();
@@ -113,7 +114,8 @@ class AdminQuestions extends BaseController
             'question_html' => $question,
             'solution_html' => $solution,
             'owner_id' => $this->user['id'],
-            'grade_id' => $gradeId
+            'grade_id' => $gradeId,
+            'calculator_enabled' => $calculatorEnabled
         ]);
 
         $topicQuestionsModel->insert([
@@ -185,6 +187,7 @@ class AdminQuestions extends BaseController
         $solution = $this->request->getPost('solution');
         $answers = json_decode(base64_decode($this->request->getPost('answers')));
         $correctAnswerIndex = (int) $this->request->getPost('correctAnswerIndex');
+        $calculatorEnabled = $this->request->getPost('calculatorEnabled');
 
         $questionModel = new QuestionModel();
         $questionAnswersModel = new QuestionAnswersModel();
@@ -200,7 +203,8 @@ class AdminQuestions extends BaseController
             'question_type' => $questionType,
             'question_html' => $question_html,
             'solution_html' => $solution,
-            'grade_id' => $gradeId
+            'grade_id' => $gradeId,
+            'calculator_enabled' => $calculatorEnabled
         ]);
 
         if (!$updated) {

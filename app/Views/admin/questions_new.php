@@ -130,6 +130,18 @@
                     </div>
                 </div>
 
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="form-group">
+                            <label for="calculatorEnabled">Calculator</label>
+                            <select class="form-control" style="max-width: 150px;" id="calculatorEnabled">
+                                <option value="0">Disabled</option>
+                                <option value="1">Enabled</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="d-flex justify-content-end mt-3">
                     <button class="btn btn-sm btn-primary" id="saveBtn">Save</button>
                 </div>
@@ -203,6 +215,7 @@
             let gradeId = $("#grade").val();
             let question = CKEDITOR.instances["questionEditor"].getData();
             let solution = CKEDITOR.instances["solutionEditor"].getData();
+            let calculatorEnabled = $("#calculatorEnabled").val();
             let answers = [];
             let correctAnswerIndex = -1;
 
@@ -287,6 +300,7 @@
                 formData.append('solution', solution);
                 formData.append('answers', base64EncodeUnicode(JSON.stringify(answers)));
                 formData.append('correctAnswerIndex', correctAnswerIndex);
+                formData.append('calculatorEnabled', calculatorEnabled);
 
                 $(this).attr('data-content', $(this).html()).html('<i class="fa fa-spinner fa-spin"></i>').css('pointer-events', 'none');
 

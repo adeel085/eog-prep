@@ -17,5 +17,5 @@ class QuestionModel extends Model
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
     protected $dateFormat = 'datetime';
-    protected $allowedFields = ['level', 'question_type', 'question_html', 'solution_html', 'owner_id', 'grade_id'];
+    protected $allowedFields = ['level', 'question_type', 'question_html', 'solution_html', 'owner_id', 'grade_id', 'calculator_enabled'];
 }
