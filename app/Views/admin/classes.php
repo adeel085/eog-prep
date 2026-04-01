@@ -91,6 +91,69 @@
     </div>
 </div>
 
+<div class="modal" id="manageAssignmentsModal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assigned Topics for <span id="classNameAssignments"></span></h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">
+                    Assign a topic to this class. Leave level empty to allow students in this class to practice any level for that topic.
+                </p>
+
+                <div class="row align-items-end">
+                    <div class="col-md-7">
+                        <div class="form-group">
+                            <label for="assignmentTopicId">Topic</label>
+                            <select class="form-control" id="assignmentTopicId">
+                                <option value="">Select Topic</option>
+                                <?php foreach ($topics as $topic) : ?>
+                                    <option value="<?= $topic['id'] ?>"><?= esc($topic['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <?php if (count($topics) == 0) : ?>
+                                <small class="text-muted">No topics are available to assign yet.</small>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="assignmentLevel">Level</label>
+                            <select class="form-control" id="assignmentLevel">
+                                <option value="">Any level</option>
+                                <option value="1">Level 1</option>
+                                <option value="2">Level 2</option>
+                                <option value="3">Level 3</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-primary w-100 mb-3"
+                            id="saveAssignmentBtn"
+                            <?= count($topics) == 0 ? 'disabled' : '' ?>
+                        >
+                            Add
+                        </button>
+                    </div>
+                </div>
+
+                <input type="hidden" id="assignmentClassId">
+
+                <hr>
+
+                <div>
+                    <h6 class="mb-3">Current Assignments</h6>
+                    <div id="currentAssignmentsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <div class="row">
     <div class="col-12">
@@ -106,15 +169,36 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Assigned Topics</th>
                                 <th></th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($classes as $class) : ?>
-                                <tr data-name="<?= $class['name'] ?>" data-id="<?= $class['id'] ?>">
-                                    <td><?= $class['name'] ?></td>
+                                <tr
+                                    data-name="<?= esc($class['name']) ?>"
+                                    data-id="<?= $class['id'] ?>"
+                                    data-assignments="<?= esc(json_encode($class['assignments'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), 'attr') ?>"
+                                >
+                                    <td><?= esc($class['name']) ?></td>
+                                    <td>
+                                        <?php if (!empty($class['assignments'])) : ?>
+                                            <div class="d-flex flex-wrap" style="gap: 8px;">
+                                                <?php foreach ($class['assignments'] as $assignment) : ?>
+                                                    <span class="badge badge-primary" style="font-size: 12px; font-weight: 500;">
+                                                        <?= esc($assignment['topic_name']) ?> (<?= $assignment['level'] === null ? 'Any level' : 'Level ' . $assignment['level'] ?>)
+                                                    </span>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        <?php else : ?>
+                                            <span class="text-muted">No assigned topics. Students can choose topic and level as usual.</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <div class="d-flex justify-content-end" style="gap: 10px;">
+                                            <a href="javascript:void(0)" class="table-action-btn manage-assignments-btn" data-toggle="tooltip" title="Manage Assigned Topics">
+                                                <i class="fa fa-list"></i>
+                                            </a>
                                             <a href="javascript:void(0)" class="table-action-btn send-email-btn" data-toggle="tooltip" title="Send Email to Parents">
                                                 <i class="fa fa-envelope"></i>
                                             </a>
@@ -135,7 +219,7 @@
                             if (count($classes) == 0) :
                             ?>
                                 <tr>
-                                    <td colspan="2" class="text-center">No classes found</td>
+                                    <td colspan="3" class="text-center">No classes found</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -151,6 +235,39 @@
 <?= $this->section('foot') ?>
 <script>
     $(document).ready(function() {
+        function escapeHtml(value) {
+            return $("<div>").text(value ?? "").html();
+        }
+
+        function formatAssignmentLabel(assignment) {
+            if (assignment.level === null || assignment.level === '' || typeof assignment.level === 'undefined') {
+                return `${assignment.topic_name} (Any level)`;
+            }
+
+            return `${assignment.topic_name} (Level ${assignment.level})`;
+        }
+
+        function renderAssignments(assignments) {
+            if (!assignments || assignments.length === 0) {
+                $("#currentAssignmentsList").html(`
+                    <div class="text-muted">
+                        No assignments yet. Students in this class will keep choosing topic and level normally.
+                    </div>
+                `);
+                return;
+            }
+
+            const html = assignments.map((assignment) => `
+                <div class="border rounded px-3 py-2 mb-2 d-flex justify-content-between align-items-center" style="gap: 12px;">
+                    <div>${escapeHtml(formatAssignmentLabel(assignment))}</div>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-assignment-btn" data-assignment-id="${assignment.id}">
+                        Remove
+                    </button>
+                </div>
+            `).join('');
+
+            $("#currentAssignmentsList").html(html);
+        }
 
         $("#sendEmailBtn").click(async function() {
 
@@ -259,6 +376,132 @@
             $("#classNameSendingEmail").text(className);
 
             $("#sendingEmailModal").modal("show");
+        });
+
+        $(".manage-assignments-btn").click(function() {
+            let row = $(this).closest('tr');
+            let classId = row.data('id');
+            let className = row.data('name');
+            let assignments = row.attr('data-assignments');
+
+            try {
+                assignments = assignments ? JSON.parse(assignments) : [];
+            }
+            catch (error) {
+                assignments = [];
+            }
+
+            $("#assignmentClassId").val(classId);
+            $("#classNameAssignments").text(className);
+            $("#assignmentTopicId").val('');
+            $("#assignmentLevel").val('');
+
+            renderAssignments(assignments);
+
+            $("#manageAssignmentsModal").modal('show');
+        });
+
+        $("#saveAssignmentBtn").click(async function() {
+            let classId = $("#assignmentClassId").val();
+            let topicId = $("#assignmentTopicId").val();
+            let level = $("#assignmentLevel").val();
+
+            if (topicId == '') {
+                new Notify({
+                    title: 'Input Error',
+                    text: 'Please select a topic.',
+                    status: 'warning',
+                    autoclose: true,
+                    autotimeout: 3000
+                });
+                return;
+            }
+
+            try {
+                let formData = new FormData();
+                formData.append('class_id', classId);
+                formData.append('topic_id', topicId);
+                formData.append('level', level);
+
+                $(this).attr('data-content', $(this).html()).html('<i class="fa fa-spinner fa-spin"></i>').css('pointer-events', 'none');
+
+                let res = await ajaxCall({
+                    url: baseUrl + 'admin/classes/assign-topic-level',
+                    data: formData,
+                    csrfHeader: '<?= csrf_header() ?>',
+                    csrfHash: '<?= csrf_hash() ?>'
+                });
+
+                if (res.status == 'success') {
+                    window.location.reload();
+                    return;
+                }
+
+                new Notify({
+                    title: 'Error',
+                    text: res.message,
+                    status: 'error',
+                    autoclose: true,
+                    autotimeout: 3000
+                });
+            }
+            catch (err) {
+                new Notify({
+                    title: 'Error',
+                    text: err.responseJSON.message || 'Something went wrong',
+                    status: 'error',
+                    autoclose: true,
+                    autotimeout: 3000
+                });
+            }
+
+            $(this).html($(this).attr('data-content')).css('pointer-events', 'auto');
+        });
+
+        $(document).on('click', '.remove-assignment-btn', async function() {
+            if (!confirm('Are you sure you want to remove this assignment?')) {
+                return;
+            }
+
+            let assignmentId = $(this).data('assignment-id');
+
+            try {
+                let formData = new FormData();
+                formData.append('assignment_id', assignmentId);
+
+                $(this).attr('data-content', $(this).html()).html('<i class="fa fa-spinner fa-spin"></i>').css('pointer-events', 'none');
+
+                let res = await ajaxCall({
+                    url: baseUrl + 'admin/classes/remove-topic-level',
+                    data: formData,
+                    csrfHeader: '<?= csrf_header() ?>',
+                    csrfHash: '<?= csrf_hash() ?>'
+                });
+
+                if (res.status == 'success') {
+                    window.location.reload();
+                    return;
+                }
+
+                new Notify({
+                    title: 'Error',
+                    text: res.message,
+                    status: 'error',
+                    autoclose: true,
+                    autotimeout: 3000
+                });
+            }
+            catch (err) {
+                new Notify({
+                    title: 'Error',
+                    text: err.responseJSON.message || 'Something went wrong',
+                    status: 'error',
+                    autoclose: true,
+                    autotimeout: 3000
+                });
+            }
+
+            $(this).html($(this).attr('data-content')).css('pointer-events', 'auto');
         });
 
         $("#newClassSaveBtn").click(async function() {

@@ -74,6 +74,8 @@ $routes->post('/submit-answer', 'Home::submitAnswer');
 $routes->post('/admin/classes/saveNew', 'AdminClasses::saveNew');
 $routes->post('/admin/classes/delete', 'AdminClasses::delete');
 $routes->post('/admin/classes/update', 'AdminClasses::update');
+$routes->post('/admin/classes/assign-topic-level', 'AdminClasses::assignTopicLevel');
+$routes->post('/admin/classes/remove-topic-level', 'AdminClasses::removeTopicLevel');
 $routes->post('/admin/grades/saveNew', 'AdminGrades::saveNew');
 $routes->post('/admin/grades/delete', 'AdminGrades::delete');
 $routes->post('/admin/grades/update', 'AdminGrades::update');

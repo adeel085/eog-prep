@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\ClassModel;
+use App\Models\ClassTopicLevelModel;
+use App\Models\TopicModel;
 use App\Models\UserModel;
 
 class AdminClasses extends BaseController
@@ -20,12 +22,19 @@ class AdminClasses extends BaseController
 
         $classModel = new ClassModel();
 
-        $classes = $classModel->where('owner_id', $this->user['id'])->findAll();
+        $classes = $classModel->where('owner_id', $this->user['id'])->orderBy('name', 'ASC')->findAll();
+        $topics = $this->getAssignableTopics();
+        $assignmentsByClassId = $this->getAssignmentsByClassId(array_column($classes, 'id'));
+
+        foreach ($classes as &$class) {
+            $class['assignments'] = $assignmentsByClassId[$class['id']] ?? [];
+        }
 
         return view('admin/classes', [
             'pageTitle' => 'Classes',
             'flashData' => $this->session->getFlashdata(),
             'classes' => $classes,
+            'topics' => $topics,
             'user' => $this->user
         ]);
     }
@@ -118,6 +127,7 @@ class AdminClasses extends BaseController
             return $this->response->setStatusCode(404)->setJSON(['status' => 'error', 'message' => 'Class not found']);
         }
 
+        (new ClassTopicLevelModel())->where('class_id', $classId)->delete();
         $classModel->delete($classId);
 
         $this->session->setFlashdata('status', 'class_deleted');
@@ -158,6 +168,135 @@ class AdminClasses extends BaseController
         $this->session->setFlashdata('status', 'class_updated');
 
         return $this->response->setJSON(['status' => 'success', 'message' => 'Class updated successfully']);
+    }
+
+    public function assignTopicLevel()
+    {
+        if (!$this->user) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+        }
+
+        if ($this->user['user_type'] != 'admin' && $this->user['user_type'] != 'teacher') {
+            return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Forbidden']);
+        }
+
+        $classId = $this->request->getPost('class_id');
+        $topicId = $this->request->getPost('topic_id');
+        $level = trim((string) $this->request->getPost('level'));
+
+        if (!$classId || !$topicId) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Class and topic are required']);
+        }
+
+        $class = $this->getOwnedClass($classId);
+
+        if (!$class) {
+            return $this->response->setStatusCode(404)->setJSON(['status' => 'error', 'message' => 'Class not found']);
+        }
+
+        $assignableTopicIds = array_map('intval', array_column($this->getAssignableTopics(), 'id'));
+
+        if (!in_array((int) $topicId, $assignableTopicIds, true)) {
+            return $this->response->setStatusCode(404)->setJSON(['status' => 'error', 'message' => 'Topic not found']);
+        }
+
+        $normalizedLevel = null;
+
+        if ($level !== '') {
+            if (!in_array($level, ['1', '2', '3'], true)) {
+                return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Invalid level selected']);
+            }
+
+            $normalizedLevel = (int) $level;
+        }
+
+        $classTopicLevelModel = new ClassTopicLevelModel();
+        $existingAllLevelsAssignment = $classTopicLevelModel
+            ->where('class_id', $classId)
+            ->where('topic_id', $topicId)
+            ->where('level IS NULL', null, false)
+            ->first();
+
+        if ($normalizedLevel === null) {
+            $existingTopicAssignments = (new ClassTopicLevelModel())
+                ->where('class_id', $classId)
+                ->where('topic_id', $topicId)
+                ->first();
+
+            if ($existingTopicAssignments) {
+                return $this->response->setStatusCode(400)->setJSON([
+                    'status' => 'error',
+                    'message' => 'This topic already has assignments for the class. Remove them first to allow all levels.'
+                ]);
+            }
+        }
+        else {
+            if ($existingAllLevelsAssignment) {
+                return $this->response->setStatusCode(400)->setJSON([
+                    'status' => 'error',
+                    'message' => 'This topic is already assigned for all levels.'
+                ]);
+            }
+
+            $existingLevelAssignment = (new ClassTopicLevelModel())
+                ->where('class_id', $classId)
+                ->where('topic_id', $topicId)
+                ->where('level', $normalizedLevel)
+                ->first();
+
+            if ($existingLevelAssignment) {
+                return $this->response->setStatusCode(400)->setJSON([
+                    'status' => 'error',
+                    'message' => 'This topic and level is already assigned to the class.'
+                ]);
+            }
+        }
+
+        $saved = $classTopicLevelModel->insert([
+            'class_id' => $classId,
+            'topic_id' => $topicId,
+            'level' => $normalizedLevel
+        ]);
+
+        if (!$saved) {
+            return $this->response->setStatusCode(500)->setJSON(['status' => 'error', 'message' => 'Unable to save assignment']);
+        }
+
+        return $this->response->setJSON(['status' => 'success', 'message' => 'Assignment saved successfully']);
+    }
+
+    public function removeTopicLevel()
+    {
+        if (!$this->user) {
+            return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+        }
+
+        if ($this->user['user_type'] != 'admin' && $this->user['user_type'] != 'teacher') {
+            return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Forbidden']);
+        }
+
+        $assignmentId = $this->request->getPost('assignment_id');
+
+        if (!$assignmentId) {
+            return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Assignment is required']);
+        }
+
+        $classTopicLevelModel = new ClassTopicLevelModel();
+        $assignment = $classTopicLevelModel->find($assignmentId);
+
+        if (!$assignment) {
+            return $this->response->setStatusCode(404)->setJSON(['status' => 'error', 'message' => 'Assignment not found']);
+        }
+
+        $class = $this->getOwnedClass($assignment['class_id']);
+
+        if (!$class) {
+            return $this->response->setStatusCode(404)->setJSON(['status' => 'error', 'message' => 'Class not found']);
+        }
+
+        $classTopicLevelModel->delete($assignmentId);
+
+        return $this->response->setJSON(['status' => 'success', 'message' => 'Assignment removed successfully']);
     }
 
     public function sendEmailToParents()
@@ -213,6 +352,67 @@ class AdminClasses extends BaseController
         }
 
         return $this->response->setJSON(['status' => 'success', 'message' => 'Emails sent successfully']);
+    }
+
+    private function getOwnedClass($classId)
+    {
+        $classModel = new ClassModel();
+        $class = $classModel->find($classId);
+
+        if (!$class || $class['owner_id'] != $this->user['id']) {
+            return null;
+        }
+
+        return $class;
+    }
+
+    private function getAssignableTopics()
+    {
+        $topicModel = new TopicModel();
+
+        if ($this->user['user_type'] == 'admin') {
+            return $topicModel->where('owner_id', $this->user['id'])->orderBy('name', 'ASC')->findAll();
+        }
+
+        $userModel = new UserModel();
+        $adminUser = $userModel->where('user_type', 'admin')->first();
+
+        if ($adminUser) {
+            $topicModel
+                ->groupStart()
+                ->where('owner_id', $adminUser['id'])
+                ->orWhere('owner_id', $this->user['id'])
+                ->groupEnd();
+        }
+        else {
+            $topicModel->where('owner_id', $this->user['id']);
+        }
+
+        return $topicModel->orderBy('name', 'ASC')->findAll();
+    }
+
+    private function getAssignmentsByClassId($classIds)
+    {
+        if (empty($classIds)) {
+            return [];
+        }
+
+        $classTopicLevelModel = new ClassTopicLevelModel();
+        $assignments = $classTopicLevelModel
+            ->select('classes_topics_levels.id, classes_topics_levels.class_id, classes_topics_levels.topic_id, classes_topics_levels.level, topics.name AS topic_name')
+            ->join('topics', 'topics.id = classes_topics_levels.topic_id')
+            ->whereIn('classes_topics_levels.class_id', $classIds)
+            ->orderBy('topics.name', 'ASC')
+            ->orderBy('classes_topics_levels.level', 'ASC')
+            ->findAll();
+
+        $assignmentsByClassId = [];
+
+        foreach ($assignments as $assignment) {
+            $assignmentsByClassId[$assignment['class_id']][] = $assignment;
+        }
+
+        return $assignmentsByClassId;
     }
 
     private function sendMissingQuestionsEmail($parentEmails, $student, $startDate, $endDate) {

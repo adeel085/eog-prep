@@ -41,12 +41,12 @@
                     <select class="form-control" id="topic">
                         <option value="">Select Topic</option>
                         <?php foreach ($topics as $topic) : ?>
-                            <option value="<?= $topic['id'] ?>"><?= $topic['name'] ?></option>
+                            <option value="<?= $topic['id'] ?>"><?= esc($topic['name']) ?></option>
                         <?php endforeach; ?>
                     </select>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" id="difficultyLevelGroup">
                     <label for="name">Select Difficulty Level</label>
                     <select class="form-control" id="difficultyLevel">
                         <option value="">Select Difficulty Level</option>
@@ -55,6 +55,17 @@
                         <option value="3">Hard</option>
                     </select>
                 </div>
+
+                <div class="form-group d-none" id="fixedDifficultyLevelGroup">
+                    <label>Difficulty Level</label>
+                    <input type="text" class="form-control" id="fixedDifficultyLevelLabel" readonly>
+                </div>
+
+                <?php if ($hasAssignedTopics) : ?>
+                    <small class="text-muted d-block">
+                        Your class has assigned topics. Only those topics and levels are available for this session.
+                    </small>
+                <?php endif; ?>
 			</div>
 			<div class="modal-footer">
 				<button type="button" class="btn btn-sm btn-primary" id="startSessionBtn">Start Session</button>
@@ -81,7 +92,11 @@
         <h4>Quick Links</h4>
 
         <div class="d-flex flex-wrap" style="gap: 10px;">
-            <a class="card page-card" data-toggle="modal" data-target="#startSessionModal" style="padding: 40px 60px; cursor: pointer;">
+            <a
+                class="card page-card"
+                <?= $autoStartSessionUrl ? 'href="' . esc($autoStartSessionUrl) . '"' : 'data-toggle="modal" data-target="#startSessionModal"' ?>
+                style="padding: 40px 60px; cursor: pointer;"
+            >
                 <div class="card-body">
                     <div class="d-flex flex-column align-items-center">
                         <img src="<?= base_url('public/assets/images/session.png') ?>" alt="Start Session" class="img-fluid" style="width: 130px;">
@@ -115,6 +130,72 @@
 <?= $this->section('foot') ?>
 <script>
     $(() => {
+        const topics = <?= json_encode($topics) ?>;
+        const topicsById = {};
+
+        topics.forEach((topic) => {
+            topicsById[String(topic.id)] = topic;
+        });
+
+        function getLevelLabel(level) {
+            if (String(level) === '1') {
+                return 'Easy';
+            }
+
+            if (String(level) === '2') {
+                return 'Medium';
+            }
+
+            return 'Hard';
+        }
+
+        function renderLevelOptions(topicId) {
+            const topic = topicsById[String(topicId)];
+
+            $("#difficultyLevel").val('');
+            $("#fixedDifficultyLevelLabel").val('');
+            $("#difficultyLevelGroup").addClass('d-none');
+            $("#fixedDifficultyLevelGroup").addClass('d-none');
+            $("#difficultyLevel").html('<option value="">Select Difficulty Level</option>');
+
+            if (!topic) {
+                return;
+            }
+
+            if (topic.allows_all_levels) {
+                $("#difficultyLevelGroup").removeClass('d-none');
+                $("#difficultyLevel").html(`
+                    <option value="">Select Difficulty Level</option>
+                    <option value="1">Easy</option>
+                    <option value="2">Medium</option>
+                    <option value="3">Hard</option>
+                `);
+                return;
+            }
+
+            if (topic.assigned_levels.length === 1) {
+                $("#fixedDifficultyLevelGroup").removeClass('d-none');
+                $("#fixedDifficultyLevelLabel").val(getLevelLabel(topic.assigned_levels[0]));
+                $("#difficultyLevel").html(`<option value="${topic.assigned_levels[0]}" selected>${getLevelLabel(topic.assigned_levels[0])}</option>`);
+                $("#difficultyLevel").val(String(topic.assigned_levels[0]));
+                return;
+            }
+
+            $("#difficultyLevelGroup").removeClass('d-none');
+            $("#difficultyLevel").html(`
+                <option value="">Select Difficulty Level</option>
+                ${topic.assigned_levels.map((level) => `<option value="${level}">${getLevelLabel(level)}</option>`).join('')}
+            `);
+        }
+
+        $("#topic").change(function() {
+            renderLevelOptions($(this).val());
+        });
+
+        $('#startSessionModal').on('show.bs.modal', function() {
+            renderLevelOptions($("#topic").val());
+        });
+
         $("#startSessionBtn").click(function() {
             let topicId = $("#topic").val();
             let difficultyLevel = $("#difficultyLevel").val();
