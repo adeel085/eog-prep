@@ -103,19 +103,28 @@
                     Assign a topic to this class. Leave level empty to allow students in this class to practice any level for that topic.
                 </p>
 
+                <div class="form-group">
+                    <label for="assignmentGradeFilter">Filter by Grade</label>
+                    <select class="form-control" id="assignmentGradeFilter">
+                        <option value="">All Grades</option>
+                        <?php foreach ($grades as $grade) : ?>
+                            <option value="<?= $grade['id'] ?>"><?= esc($grade['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
                 <div class="row align-items-end">
                     <div class="col-md-7">
                         <div class="form-group">
                             <label for="assignmentTopicId">Topic</label>
                             <select class="form-control" id="assignmentTopicId">
                                 <option value="">Select Topic</option>
-                                <?php foreach ($topics as $topic) : ?>
-                                    <option value="<?= $topic['id'] ?>"><?= esc($topic['name']) ?></option>
-                                <?php endforeach; ?>
                             </select>
-                            <?php if (count($topics) == 0) : ?>
-                                <small class="text-muted">No topics are available to assign yet.</small>
-                            <?php endif; ?>
+                            <small class="text-muted" id="assignmentTopicHelp">
+                                <?php if (count($topics) == 0) : ?>
+                                    No topics are available to assign yet.
+                                <?php endif; ?>
+                            </small>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -235,8 +244,40 @@
 <?= $this->section('foot') ?>
 <script>
     $(document).ready(function() {
+        const assignableTopics = <?= json_encode($topics) ?>;
+
         function escapeHtml(value) {
             return $("<div>").text(value ?? "").html();
+        }
+
+        function renderAssignableTopics(selectedTopicId = '') {
+            const gradeId = $("#assignmentGradeFilter").val();
+            const filteredTopics = assignableTopics.filter((topic) => {
+                if (gradeId === '') {
+                    return true;
+                }
+
+                return String(topic.grade_id ?? '') === String(gradeId);
+            });
+
+            const options = ['<option value="">Select Topic</option>'];
+            filteredTopics.forEach((topic) => {
+                const isSelected = String(selectedTopicId) === String(topic.id) ? 'selected' : '';
+                options.push(`<option value="${topic.id}" ${isSelected}>${escapeHtml(topic.name)}</option>`);
+            });
+
+            $("#assignmentTopicId").html(options.join(''));
+            $("#saveAssignmentBtn").prop('disabled', filteredTopics.length === 0);
+
+            if (assignableTopics.length === 0) {
+                $("#assignmentTopicHelp").text('No topics are available to assign yet.');
+            }
+            else if (filteredTopics.length === 0) {
+                $("#assignmentTopicHelp").text('No topics found for the selected grade.');
+            }
+            else {
+                $("#assignmentTopicHelp").text('');
+            }
         }
 
         function formatAssignmentLabel(assignment) {
@@ -393,6 +434,8 @@
 
             $("#assignmentClassId").val(classId);
             $("#classNameAssignments").text(className);
+            $("#assignmentGradeFilter").val('');
+            renderAssignableTopics();
             $("#assignmentTopicId").val('');
             $("#assignmentLevel").val('');
 
@@ -400,6 +443,12 @@
 
             $("#manageAssignmentsModal").modal('show');
         });
+
+        $("#assignmentGradeFilter").change(function() {
+            renderAssignableTopics();
+        });
+
+        renderAssignableTopics();
 
         $("#saveAssignmentBtn").click(async function() {
             let classId = $("#assignmentClassId").val();

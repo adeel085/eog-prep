@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use App\Models\ClassModel;
 use App\Models\ClassTopicLevelModel;
+use App\Models\GradeModel;
 use App\Models\TopicModel;
 use App\Models\UserModel;
 
@@ -21,9 +22,11 @@ class AdminClasses extends BaseController
         }
 
         $classModel = new ClassModel();
+        $gradeModel = new GradeModel();
 
         $classes = $classModel->where('owner_id', $this->user['id'])->orderBy('name', 'ASC')->findAll();
         $topics = $this->getAssignableTopics();
+        $grades = $gradeModel->orderBy('name', 'ASC')->findAll();
         $assignmentsByClassId = $this->getAssignmentsByClassId(array_column($classes, 'id'));
 
         foreach ($classes as &$class) {
@@ -34,6 +37,7 @@ class AdminClasses extends BaseController
             'pageTitle' => 'Classes',
             'flashData' => $this->session->getFlashdata(),
             'classes' => $classes,
+            'grades' => $grades,
             'topics' => $topics,
             'user' => $this->user
         ]);
