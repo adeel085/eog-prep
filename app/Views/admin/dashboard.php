@@ -270,7 +270,7 @@
     <div class="col-md-3">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">Top 5 Missed Questions</h5>
+                <h5 class="card-title mb-0">Top 10 Missed Questions</h5>
             </div>
             <div class="card-body">
                 <!-- Topic Filter -->
@@ -296,8 +296,10 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('foot') ?>
+<script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML"></script>
 <script>
     $(() => {
+
         const classes = <?= json_encode($classes) ?>;
         let currentClassId = null; // Track currently selected class
 

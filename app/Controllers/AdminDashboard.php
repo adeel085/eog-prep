@@ -257,7 +257,7 @@ class AdminDashboard extends BaseController
                 AND tq.topic_id = ?
                 GROUP BY sqr.question_id
                 ORDER BY miss_count DESC
-                LIMIT 5
+                LIMIT 10
             ";
             $params[] = $topicId;
         } else {
@@ -274,7 +274,7 @@ class AdminDashboard extends BaseController
                 AND sqr.is_correct = 0
                 GROUP BY sqr.question_id
                 ORDER BY miss_count DESC
-                LIMIT 5
+                LIMIT 10
             ";
         }
 
