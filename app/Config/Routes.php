@@ -10,6 +10,7 @@ $routes->get('/login', 'Login::index');
 $routes->get('/admin/teacher-registration', 'AdminLogin::teacherRegistrationPage');
 $routes->get('/signup', 'Signup::index');
 $routes->get('/home', 'Home::index');
+$routes->get('/home/custom-test', 'Home::customTest');
 $routes->get('/admin', 'AdminLogin::index');
 $routes->get('/admin/dashboard', 'AdminDashboard::index');
 $routes->get('/logout', 'Logout::index');

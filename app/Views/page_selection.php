@@ -32,7 +32,7 @@
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h5 class="modal-title">Start Session</h5>
+				<h5 class="modal-title">Class Assignment</h5>
 				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
 			<div class="modal-body">
@@ -63,12 +63,61 @@
 
                 <?php if ($hasAssignedTopics) : ?>
                     <small class="text-muted d-block">
-                        Your class has assigned topics. Only those topics and levels are available for this session.
+                        Only the topics and levels assigned to your class are available here.
                     </small>
                 <?php endif; ?>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-sm btn-primary" id="startSessionBtn">Start Session</button>
+				<button type="button" class="btn btn-sm btn-primary" id="startSessionBtn">Start Assignment</button>
+				<button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal" id="customTestModal">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Make up your own test</h5>
+				<button type="button" class="close" data-dismiss="modal">&times;</button>
+			</div>
+			<div class="modal-body">
+				<div class="form-group">
+                    <label>Select Grade</label>
+                    <select class="form-control" id="customTestGrade">
+                        <option value="">Select Grade</option>
+                        <?php foreach ($customTestGrades as $grade) : ?>
+                            <option value="<?= $grade['id'] ?>"><?= esc($grade['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+				<div class="form-group">
+                    <label>Select Topic</label>
+                    <select class="form-control" id="customTestTopic">
+                        <option value="">Select Topic</option>
+                    </select>
+                    <small class="text-muted d-block mt-1" id="customTestTopicHelp">Select a grade first.</small>
+                </div>
+
+                <div class="form-group d-none" id="customTestDifficultyGroup">
+                    <label>Select Level</label>
+                    <select class="form-control" id="customTestDifficultyLevel">
+                        <option value="">Select Level</option>
+                        <option value="1">Easy</option>
+                        <option value="2">Medium</option>
+                        <option value="3">Hard</option>
+                    </select>
+                    <small class="text-muted">Choose one level for this practice test.</small>
+                </div>
+
+                <small class="text-muted d-block">
+                    This test is independent from class assignments.
+                </small>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-sm btn-primary" id="startCustomTestBtn">Start Test</button>
 				<button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
 			</div>
 		</div>
@@ -99,8 +148,17 @@
             >
                 <div class="card-body">
                     <div class="d-flex flex-column align-items-center">
-                        <img src="<?= base_url('public/assets/images/session.png') ?>" alt="Start Session" class="img-fluid" style="width: 130px;">
-                        <h5 class="card-title">Start Session</h5>
+                        <img src="<?= base_url('public/assets/images/session.png') ?>" alt="Class Assignment" class="img-fluid" style="width: 130px;">
+                        <h5 class="card-title">Class Assignment</h5>
+                    </div>
+                </div>
+            </a>
+
+            <a class="card page-card" data-toggle="modal" data-target="#customTestModal" style="padding: 40px 60px; cursor: pointer;">
+                <div class="card-body">
+                    <div class="d-flex flex-column align-items-center">
+                        <img src="<?= base_url('public/assets/images/progress.png') ?>" alt="Make up your own test" class="img-fluid" style="width: 130px;">
+                        <h5 class="card-title text-center">Make up your<br>own test</h5>
                     </div>
                 </div>
             </a>
@@ -131,11 +189,21 @@
 <script>
     $(() => {
         const topics = <?= json_encode($topics) ?>;
+        const customTestTopics = <?= json_encode($customTestTopics) ?>;
         const topicsById = {};
+        const customTestTopicsById = {};
 
         topics.forEach((topic) => {
             topicsById[String(topic.id)] = topic;
         });
+
+        customTestTopics.forEach((topic) => {
+            customTestTopicsById[String(topic.id)] = topic;
+        });
+
+        function escapeHtml(value) {
+            return $("<div>").text(value ?? "").html();
+        }
 
         function getLevelLabel(level) {
             if (String(level) === '1') {
@@ -188,12 +256,72 @@
             `);
         }
 
+        function renderCustomTestLevels(topicId) {
+            const topic = customTestTopicsById[String(topicId)];
+
+            $("#customTestDifficultyLevel").val('');
+            $("#customTestDifficultyGroup").addClass('d-none');
+
+            if (!topic) {
+                $("#customTestTopicHelp").text('Select a topic.');
+                return;
+            }
+
+            $("#customTestTopicHelp").text('');
+            $("#customTestDifficultyGroup").removeClass('d-none');
+        }
+
+        function renderCustomTestTopics() {
+            const gradeId = $("#customTestGrade").val();
+
+            $("#customTestTopic").val('');
+            $("#customTestDifficultyLevel").val('');
+            $("#customTestDifficultyGroup").addClass('d-none');
+
+            if (!gradeId) {
+                $("#customTestTopic").html('<option value="">Select Topic</option>');
+                $("#customTestTopicHelp").text('Select a grade first.');
+                return;
+            }
+
+            const filteredTopics = customTestTopics.filter((topic) => String(topic.grade_id) === String(gradeId));
+            const options = ['<option value="">Select Topic</option>'];
+
+            filteredTopics.forEach((topic) => {
+                options.push(`<option value="${topic.id}">${escapeHtml(topic.name)}</option>`);
+            });
+
+            $("#customTestTopic").html(options.join(''));
+
+            if (filteredTopics.length === 0) {
+                $("#customTestTopicHelp").text('No topics found for the selected grade.');
+            }
+            else {
+                $("#customTestTopicHelp").text('');
+            }
+        }
+
         $("#topic").change(function() {
             renderLevelOptions($(this).val());
         });
 
+        $("#customTestGrade").change(function() {
+            renderCustomTestTopics();
+        });
+
+        $("#customTestTopic").change(function() {
+            renderCustomTestLevels($(this).val());
+        });
+
         $('#startSessionModal').on('show.bs.modal', function() {
             renderLevelOptions($("#topic").val());
+        });
+
+        $('#customTestModal').on('show.bs.modal', function() {
+            $("#customTestGrade").val('');
+            $("#customTestTopic").val('');
+            renderCustomTestTopics();
+            renderCustomTestLevels('');
         });
 
         $("#startSessionBtn").click(function() {
@@ -210,6 +338,41 @@
             }
 
             window.location.href = '<?= base_url('home') ?>?topic_id=' + topicId + '&difficulty_level=' + difficultyLevel;
+        });
+
+        $("#startCustomTestBtn").click(function() {
+            let gradeId = $("#customTestGrade").val();
+            let topicId = $("#customTestTopic").val();
+            let difficultyLevel = $("#customTestDifficultyLevel").val();
+
+            if (!gradeId) {
+                new Notify({
+                    title: 'Error',
+                    text: 'Please select a grade',
+                    status: 'error',
+                });
+                return;
+            }
+
+            if (!topicId) {
+                new Notify({
+                    title: 'Error',
+                    text: 'Please select a topic',
+                    status: 'error',
+                });
+                return;
+            }
+
+            if (!difficultyLevel) {
+                new Notify({
+                    title: 'Error',
+                    text: 'Please select a level',
+                    status: 'error',
+                });
+                return;
+            }
+
+            window.location.href = '<?= base_url('home/custom-test') ?>?grade_id=' + gradeId + '&topic_id=' + topicId + '&difficulty_level=' + difficultyLevel;
         });
     });
 </script>

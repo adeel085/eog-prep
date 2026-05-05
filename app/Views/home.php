@@ -64,7 +64,7 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <span><?= $currentTopic['name'] ?></span>
-                            <span>Level <?= $currentLevel ?></span>
+                            <span><?= esc($currentLevelLabel) ?></span>
                         </div>
                     </div>
                 </div>
@@ -120,6 +120,7 @@
 <script src="<?= base_url('public/libs/calculator/calculator.js') ?>"></script>
 <script>
     let questions = <?= json_encode($questions) ?>;
+    let sessionLevels = <?= json_encode($sessionLevels) ?>;
     let currentQuestionIndex = -1;
     let correctAnswers = 0;
     let totalQuestions = <?= count($questions) ?>;
@@ -181,7 +182,8 @@
             answeredQuestions.push({
                 question_id: questionId,
                 student_answer: studentAnswerText,
-                is_correct: correct ? 1 : 0
+                is_correct: correct ? 1 : 0,
+                level: questions[currentQuestionIndex].level
             });
 
             if (correct) {
@@ -399,7 +401,10 @@
 
             let formData = new FormData();
             formData.append('topic_id', <?= $currentTopic['id'] ?>);
-            formData.append('level', <?= $currentLevel ?>);
+            formData.append('levels', JSON.stringify(sessionLevels));
+            if (sessionLevels.length === 1) {
+                formData.append('level', sessionLevels[0]);
+            }
             formData.append('correct_count', correctAnswers);
             formData.append('total_questions', totalQuestions);
             formData.append('answered_questions', JSON.stringify(answeredQuestions));
