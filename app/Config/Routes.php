@@ -33,7 +33,7 @@ $routes->get('/admin/topics/new', 'AdminTopics::newPage');
 $routes->get('/admin/topics/edit/(:any)', 'AdminTopics::editPage/$1');
 $routes->get('/admin/topics/(:any)/questions', 'AdminTopics::questionsPage/$1');
 
-$routes->get('/admin/questions', 'AdminQuestions::index');
+$routes->get('/admin/questions', 'AdminQuestions::index', ['filter' => 'csrf']);
 $routes->get('/admin/questions/new', 'AdminQuestions::newPage');
 $routes->get('/admin/questions/edit/(:any)', 'AdminQuestions::editPage/$1');
 
@@ -67,7 +67,12 @@ $routes->post('/admin/topics/delete', 'AdminTopics::delete');
 $routes->post('/admin/questions/saveNew', 'AdminQuestions::saveNew');
 $routes->post('/admin/questions/update', 'AdminQuestions::update');
 $routes->post('/admin/questions/delete', 'AdminQuestions::delete');
-$routes->post('/admin/questions/import-csv', 'AdminQuestions::importCsv');
+// Package importing replaces the legacy non-transactional CSV endpoint.
+$routes->post('/admin/questions/import-package', 'AdminQuestions::importPackage', ['filter' => 'csrf']);
+$routes->get('/admin/questions/sample-csv', 'AdminQuestions::sampleCsv');
+$routes->get('/admin/images', 'AdminImages::index', ['filter' => 'csrf']);
+$routes->post('/admin/images/upload', 'AdminImages::upload', ['filter' => 'csrf']);
+$routes->get('/images/(:segment)', 'AdminImages::show/$1');
 $routes->post('/admin/topics/remove-question', 'AdminTopics::removeQuestion');
 $routes->post('/admin/questions/updateTopics', 'AdminQuestions::updateTopics');
 $routes->post('/admin/questions/get-details', 'AdminQuestions::getQuestionDetails');

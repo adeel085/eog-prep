@@ -205,6 +205,12 @@
                     }
                     ?>
 
+                    <?php if (in_array($user['user_type'], ['admin', 'teacher'], true)): ?>
+                    <li>
+                        <a href="<?= base_url('/admin/images') ?>"><i class="fa fa-images navbar-icon"></i>Images Library</a>
+                    </li>
+                    <?php endif; ?>
+
                     <li>
                         <div class="d-flex justify-content-between align-items-center navbar-item-expandable">
                             <span>

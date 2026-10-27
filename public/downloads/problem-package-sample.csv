@@ -1,0 +1,3 @@
+question_html,question_type,answer,solution_html,image_files
+<p>What is 3 + 3?</p><!-- tags: addition|number-sense -->,text,6||six,"<p>Add three and three: <span class=""math-tex"">\(3 + 3 = 6\)</span>.</p>",
+<p>Which fraction is equivalent to one half?</p><!-- tags: fractions|equivalent-fractions -->,mcq,<p>1/3</p>|<p>3/4</p>|*<p>2/4</p>|<p>2/3</p>,"<p>Multiply the numerator and denominator by 2: <span class=""math-tex"">\(\frac{1}{2}=\frac{2}{4}\)</span>.</p>",

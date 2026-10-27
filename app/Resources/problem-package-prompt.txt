@@ -1,0 +1,400 @@
+You are preparing a Problem Package for EOG Prep, a maths learning website. Create accurate, age-appropriate questions that can be imported without manual corrections.
+
+The package will use these settings, selected in EOG Prep:
+Topic: {{topic}}
+Difficulty: {{level}}
+Grade: {{grade}}
+
+I may add the number of questions, learning objectives, desired question types, curriculum requirements, and image instructions after this prompt. Use those requirements to guide the content while keeping the import format below unchanged. If the number of questions or another essential content requirement is missing, ask for it before producing the package. Treat any unselected setting shown in square brackets as something to clarify.
+
+## 1. Deliverable and ZIP layout
+
+Provide one real, downloadable file named problem-package.zip with this layout:
+
+```text
+problem-package.zip
+├── problems.csv
+└── images/
+    ├── fraction-grid-01.png
+    └── triangle-02.jpg
+```
+
+Packaging rules:
+
+- Place problems.csv directly at the ZIP root.
+- Put image files directly inside images/, with no nested directories.
+- Do not wrap the contents in another parent folder.
+- Include only problems.csv and the images actually used by its questions.
+- Do not include a README, spreadsheet workbook, separate answer key, hidden system files, or alternative CSV versions.
+- If no question uses an image, image_files must be empty in every row and images/ may be omitted or empty.
+- Use an ordinary, unencrypted ZIP containing regular files. Do not include links, shortcuts, or special files.
+
+The selected topic, difficulty, and grade apply to every question. Do not encode different settings within individual rows. Imported questions have the calculator disabled, so design questions that students can reasonably solve without it unless I explicitly ask otherwise.
+
+## 2. Exact CSV contract
+
+Save problems.csv as UTF-8 with exactly these five column names, in exactly this order:
+
+```csv
+question_html,question_type,answer,solution_html,image_files
+```
+
+There is no separate tags column in EOG Prep. Tags belong in a metadata comment within question_html, as explained in section 7. Do not add topic, difficulty, level, grade, tags, question-number, or any other column.
+
+CSV formatting requirements:
+
+- Use commas between the five fields and one record per question.
+- Quote any field containing a comma, double quote, or line break.
+- Inside a quoted field, replace each double quote with two double quotes. Backslashes are not CSV quote escapes.
+- Preserve ordinary LaTeX backslashes exactly; do not double them merely because the content is CSV.
+- An empty final image_files field still counts as the fifth field. Keep its trailing comma or use an explicitly quoted empty field.
+- Quoted multiline HTML is supported, but a single line per record is easier to inspect.
+- Do not insert blank records, explanatory text, Markdown fences, or additional header rows into the actual CSV.
+- Each record must parse into exactly five fields, regardless of commas or quotation marks within its HTML.
+
+For example, this HTML:
+
+```html
+<p><span class="math-tex">\(3 + 3 = 6\)</span></p>
+```
+
+must have its attribute quotes doubled when it appears inside a quoted CSV field:
+
+```csv
+"<p><span class=""math-tex"">\(3 + 3 = 6\)</span></p>"
+```
+
+## 3. question_html: the full question
+
+Write a complete, self-contained question that assesses the requested skill at the selected grade and difficulty.
+
+- Put every written paragraph or instruction line in its own <p>...</p> element.
+- Do not leave written instructions as unwrapped text between elements.
+- Include all necessary quantities, conditions, units, labels, and rounding instructions.
+- If a diagram is needed, make sure it supplies the information the question relies on.
+- Do not reveal the answer in the question, an image caption, or image alternative text.
+- Avoid references to unavailable worksheets, earlier questions, or images that are not in the package.
+- Use HTML rather than Markdown for emphasis, lists, tables, and mathematical content.
+- Vary wording and problem contexts meaningfully; do not fill the package with near-duplicates.
+- Include the tags metadata comment described in section 7 once per generated question.
+
+Example of suitable question HTML before CSV escaping:
+
+```html
+<p>A ribbon is cut into 8 equal pieces.</p>
+<p>Mia uses 3 pieces. What fraction of the ribbon does she use?</p>
+<!-- tags: fractions|word-problems -->
+```
+
+For an image-based question, use a relative package image reference:
+
+```html
+<p>What fraction of the grid is shaded?</p>
+<p><img src="images/fraction-grid-01.png" alt="A grid divided into equal parts, with some parts shaded"></p>
+<!-- tags: fractions|visual-fractions -->
+```
+
+The second example requires fraction-grid-01.png in both the row's image_files field and the ZIP's images/ folder. Do not paste public URLs or local computer paths into question_html.
+
+## 4. Mathematics and CKEditor-compatible MathJax
+
+EOG Prep uses CKEditor with MathJax. Use formatted mathematics where it improves readability, particularly for fractions, powers, roots, equations, inequalities, coordinates, and geometry formulas.
+
+Use this inline format:
+
+```html
+<span class="math-tex">\( ... \)</span>
+```
+
+Examples before CSV escaping:
+
+```html
+<p>Simplify <span class="math-tex">\(\frac{18}{24}\)</span>.</p>
+<p>Solve <span class="math-tex">\(3x + 5 = 20\)</span>.</p>
+<p>Calculate <span class="math-tex">\(4^2 + \sqrt{9}\)</span>.</p>
+```
+
+For a separate display equation, the importer also accepts:
+
+```html
+<div class="math-tex">\[A = \frac{1}{2}bh\]</div>
+```
+
+MathJax rules:
+
+- Keep explanatory prose outside the math wrapper.
+- Use valid LaTeX, including \frac{a}{b}, \sqrt{n}, x^2, \times, and \div where appropriate.
+- Keep the opening and closing math delimiters paired.
+- Preserve LaTeX backslashes in the final CSV.
+- Do not use $...$ or $$...$$ delimiters, MathML, script tags, or external MathJax imports.
+- Do not wrap simple standalone numbers in MathJax unless formatting is useful.
+- The same math wrappers may be used in question_html, solution_html, and MCQ choices.
+- Text-entry answers must remain plain text, without HTML or MathJax wrappers.
+- The pipe character is reserved for answer separators. Inside a mathematical MCQ choice, use LaTeX \vert rather than a literal | when you mean an absolute-value bar.
+
+Allowed HTML elements are:
+p, br, span, div, strong, em, b, i, u, s, sub, sup, ul, ol, li, table, thead, tbody, tfoot, tr, td, th, caption, blockquote, img, h2, h3, h4.
+
+Use only simple formatting. The only supported class is math-tex on span or div. Images may use src, alt, title, and optional positive integer width/height. Table cells may use positive integer colspan/rowspan. Numeric attribute values must be 1–9999. Do not add inline styles, other classes, id attributes, event handlers, hyperlinks, scripts, iframes, SVG markup, or embedded objects. Prefer paragraphs and inline MathJax over elaborate layouts.
+
+## 5. question_type and answer
+
+question_type must be exactly one of these lowercase values:
+
+```text
+text
+mcq
+```
+
+### Text-entry questions
+
+For question_type=text, answer contains a plain-text accepted answer:
+
+```text
+12
+```
+
+Separate genuinely equivalent accepted alternatives with two consecutive pipes:
+
+```text
+12||twelve
+```
+
+Another example, when all three forms are appropriate for the question:
+
+```text
+0.5||1/2||one half
+```
+
+Text-answer rules:
+
+- Supply at least one nonempty answer.
+- Use || only to separate acceptable alternatives, not solution steps or separate parts of a question.
+- Do not add a correct-answer asterisk to text answers.
+- Do not use HTML, MathJax, Markdown, or explanatory sentences in the answer field.
+- If the question requires a particular form, such as a simplified fraction, only list answers that satisfy that instruction.
+- Specify units or rounding in the question and make the accepted answers consistent with those requirements.
+- Avoid questions requiring an essay, diagram drawing, or several independently marked responses; the importer stores a single answer entry with optional alternatives.
+- Do not include empty or duplicate alternatives, and do not include a literal single pipe within an alternative.
+
+### Multiple-choice questions
+
+For question_type=mcq, put the choices in answer separated by single pipes. Place exactly one * immediately before the correct choice:
+
+```text
+9|12|*18|24
+```
+
+Choices can use simple HTML. When using paragraphs:
+
+```html
+<p>9</p>|<p>12</p>|*<p>18</p>|<p>24</p>
+```
+
+Choices can also contain CKEditor-compatible mathematics:
+
+```html
+<p><span class="math-tex">\(\frac{1}{3}\)</span></p>|*<p><span class="math-tex">\(\frac{1}{2}\)</span></p>|<p><span class="math-tex">\(\frac{2}{3}\)</span></p>
+```
+
+MCQ rules:
+
+- Use four choices by default, unless my requirements call for another count. The importer accepts 2–20 choices.
+- Exactly one choice must begin with *. Keep the marker outside its HTML, immediately before the choice.
+- Every choice must be nonempty and distinct, with exactly one mathematically correct answer.
+- Choose plausible distractors based on likely misunderstandings. Avoid choices that are equivalent to the correct answer in a different form.
+- Shuffle the choices independently for each question after solving it.
+- Spread correct choices reasonably across the available positions. Do not always put the answer first or follow a repeating position pattern.
+- After shuffling, check the mathematics again and keep * attached to the correct choice.
+- Do not add A/B/C/D labels or refer to an answer by a letter in the solution; the option's content should stand on its own.
+- Do not use || between MCQ choices, trailing separators, literal pipes inside a choice, or images inside choices.
+- The importer preserves the supplied order. You must perform the shuffling before packaging the questions.
+
+For both types, the importer accepts at most 20 alternatives/choices and at most 1,000 UTF-8 bytes per individual answer/choice, including any MCQ HTML.
+
+## 6. solution_html: a worked explanation for every question
+
+Every question needs a complete, nonempty solution_html field.
+
+- Explain the reasoning and calculation that lead to the answer; do not only state the answer again.
+- Match the explanation to the selected grade and difficulty.
+- Give each written step or paragraph its own <p>...</p> element.
+- Use the MathJax formatting from section 4 for expressions that benefit from it.
+- Show enough intermediate work for a student to follow the method.
+- State the final answer clearly, including required units or rounding.
+- Make sure the final result agrees with the accepted text answer or the starred MCQ choice.
+- For an MCQ, explain why the correct choice works. Mention a common error only when it is useful.
+- Refer to features of a diagram accurately. If an additional explanation image is necessary, package and list it under the same image rules as a question image.
+- Do not use Markdown headings, Markdown bullets, code fences, external image URLs, or local computer paths inside the field.
+
+Example before CSV escaping:
+
+```html
+<p>Use the order of operations: multiply before adding.</p>
+<p>First calculate <span class="math-tex">\(3 \times 4 = 12\)</span>.</p>
+<p>Then calculate <span class="math-tex">\(5 + 12 = 17\)</span>.</p>
+<p>The answer is 17.</p>
+```
+
+## 7. Tags inside question_html
+
+EOG Prep keeps exactly five CSV columns, so write tags in one HTML comment within question_html:
+
+```html
+<p>Simplify the fraction.</p>
+<p><span class="math-tex">\(\frac{6}{8}\)</span></p>
+<!-- tags: fractions|simplifying-fractions -->
+```
+
+The importer saves those tags separately and removes the comment from the displayed question. The importer permits tags to be omitted, but for packages you generate, include 1–5 relevant tags per question unless I request otherwise.
+
+Tag-writing guidelines:
+
+- Separate tags with a single | inside the comment.
+- Use one tags comment per question, with no empty entries or duplicates.
+- Prefer concise lowercase terms describing the assessed skill or problem type.
+- Use hyphens for multiword terms, such as equivalent-fractions, number-lines, or word-problems.
+- Keep spelling consistent across the package. Choose one term for a concept instead of several near-identical variants.
+- Avoid vague labels such as maths, question, easy, or hard; topic and difficulty are already selected separately.
+- Do not put the tags comment in solution_html or answer.
+- Do not create a separate tags CSV column.
+
+Storage limits: at most 20 tags, at most 60 characters per tag, and at most 1,000 UTF-8 bytes for all tags including separators. Tags must be nonempty plain text, without HTML or control characters.
+
+Examples of the metadata comment:
+
+```html
+<!-- tags: addition -->
+<!-- tags: fractions|equivalent-fractions|visual-fractions -->
+<!-- tags: percentages|finding-a-percentage|word-problems -->
+<!-- tags: patterns|sequences|missing-number -->
+```
+
+These are alternatives showing the format; use only one such comment within any individual question_html field.
+
+## 8. image_files and image placement
+
+Leave image_files empty when the row needs no image.
+
+For one image:
+
+```text
+fraction-grid-01.png
+```
+
+For more than one image:
+
+```text
+triangle-01.png|angle-detail-01.png
+```
+
+Image-reference rules:
+
+- List basenames only in image_files: use triangle-01.png, not images/triangle-01.png.
+- Every listed basename must correspond to an actual file directly inside the ZIP's images/ folder.
+- Match filename spelling, capitalization, and extension exactly. Matching is case-sensitive.
+- Use safe descriptive names beginning with a letter or digit, followed by letters, digits, hyphens, or underscores, plus the extension. Keep the filename under 100 characters.
+- Do not use spaces, .., directory separators within a basename, or local filesystem paths.
+- List each filename only once per row; a row may list at most 20 images.
+- Reuse a filename across rows only when those rows intentionally use the same image. Include the shared file once in the ZIP.
+- Include only relevant, used images in the package.
+
+To place an image within question_html or solution_html, use:
+
+```html
+<p><img src="images/triangle-01.png" alt="A triangle with labeled sides"></p>
+```
+
+The importer also accepts a basename alone as src, but use the images/ prefix consistently when generating a package. Any image referenced in either HTML field must be listed in that row's image_files. An image used only in the solution must still be listed for that row.
+
+If a listed image is not explicitly placed in question_html or solution_html, EOG Prep automatically appends it below the question. Prefer explicit placement when ordering or context matters. The importer uploads referenced files into the Images Library and replaces package references with their permanent public URLs; you do not need to invent those URLs.
+
+Do not use external/public URLs, data URLs, or inline SVG in the package HTML. Even if an image already exists in the Images Library, this ZIP format requires the actual image file and a relative package reference.
+
+## 9. Working with images I supply
+
+I may attach raster files, reference illustrations, or public URLs copied from the EOG Prep Images Library.
+
+- Inspect the supplied material and identify which images are relevant to the requested learning objectives.
+- Use an image only when it supports a suitable question; do not force every attachment into the package.
+- Keep a supplied image unchanged unless I request modifications. You may give its packaged copy a safe descriptive filename.
+- Package each used image as an actual supported raster file, and keep all CSV references consistent with its final filename.
+- If I supply an Images Library URL, retrieve the image only if your tools can access it, then include that actual file in images/. Do not leave the public URL in the CSV.
+- If an image cannot be accessed, ask me to attach it. Do not invent its contents, pretend it was downloaded, or reference an unavailable file.
+- Do not use an image that exposes an answer key or private student information.
+- The same supplied diagram may support multiple questions if the tasks assess meaningfully different skills.
+
+## 10. Creating original images when needed
+
+When a question needs a visual and there is no suitable supplied image, create an original image using your available image-generation or diagram tools.
+
+- Make shapes, graphs, grids, number lines, and labels mathematically accurate.
+- Use a clean background, strong contrast, legible labels, and enough resolution for classroom reading.
+- Put necessary labels and measurement values in the diagram, but avoid decorative text and unnecessary visual clutter.
+- Do not display the computed answer, correct-choice marker, solution steps, or other accidental hints.
+- Preserve equal-size parts, intended proportions, axis scales, and geometric relationships where the task depends on them.
+- Prefer PNG for diagrams and illustrations; use JPG/JPEG when a photographic image is more appropriate. WebP and GIF are also supported raster formats.
+- Save each image as a real file in images/ and list its exact basename in every row that uses it.
+- Do not substitute SVG, PDF, HTML, remote links, or descriptions of an image for an actual supported raster file.
+- If you cannot produce an essential image, explain the limitation and ask for the needed asset before claiming the package is complete. Do not silently turn a requested visual question into an unrelated text-only question.
+
+## 11. Small complete CSV example
+
+This example has two questions and no image files. Its headers, metadata comments, answer separators, HTML attribute escaping, and empty fifth fields follow the EOG Prep format:
+
+```csv
+question_html,question_type,answer,solution_html,image_files
+"<p>What is 3 + 3?</p><!-- tags: addition|number-sense -->",text,6||six,"<p>Add the two groups of three.</p><p><span class=""math-tex"">\(3 + 3 = 6\)</span>.</p>",
+"<p>Which fraction is equivalent to one half?</p><!-- tags: fractions|equivalent-fractions -->",mcq,"<p>1/3</p>|<p>3/4</p>|*<p>2/4</p>|<p>2/3</p>","<p>Multiply the numerator and denominator by 2.</p><p><span class=""math-tex"">\(\frac{1}{2}=\frac{2}{4}\)</span>.</p>",
+```
+
+Use this as a formatting example only. Generate original questions for my selected topic, grade, difficulty, and custom requirements.
+
+## 12. Import limits
+
+Keep the package within all of these limits:
+
+- 1–1,000 question rows, excluding the header.
+- At most 200 image files in the ZIP.
+- ZIP file at most 25 MB.
+- Each individual image and problems.csv at most 5 MB.
+- Total uncompressed contents at most 50 MB.
+- Images no larger than 10,000 pixels on either side or 25 megapixels in total.
+- Use PNG, JPG/JPEG, WebP, or GIF with file contents that match the extension.
+- Each question_html and solution_html field at most 60,000 UTF-8 bytes.
+- At most 20 text alternatives or MCQ choices, with each answer/choice at most 1,000 UTF-8 bytes including HTML.
+- At most 20 image filenames per row and the tag limits in section 7.
+- Use normal ZIP compression. EOG Prep rejects entries with excessive expansion ratios greater than 200:1.
+
+## 13. Final checks before delivery
+
+Inspect the finished files, rather than relying only on the intended content. Confirm that:
+
+1. problems.csv is directly at the ZIP root, with no enclosing folder or unrelated files.
+2. The header is exactly question_html,question_type,answer,solution_html,image_files.
+3. The CSV is valid UTF-8 and every question record parses into exactly five fields.
+4. Embedded HTML quotes are correctly doubled for CSV; LaTeX backslashes are preserved.
+5. The question count matches my request and all questions fit the selected topic, grade, and difficulty.
+6. Every written question paragraph uses <p> tags and includes enough information to be answered.
+7. question_type is exactly text or mcq in each row.
+8. Every text question has nonempty, distinct plain-text accepted answers, with alternatives separated only by ||.
+9. Every MCQ has 2–20 distinct choices separated by single pipes, with exactly one correctly placed * marker.
+10. MCQ choices have been independently shuffled, and correct positions vary without a predictable pattern.
+11. Every solution is nonempty, explains the method step by step, and uses <p> tags for written steps.
+12. Independently solving each question produces the accepted text answer or the starred MCQ choice. Units, simplification, and rounding agree.
+13. Mathematical expressions use valid CKEditor MathJax wrappers and balanced delimiters.
+14. Each generated question has one appropriate tags comment unless I requested otherwise; tag spelling and separators are consistent.
+15. There is no sixth tags column or extra topic, difficulty, or grade column.
+16. Every filename in image_files exists directly inside images/, with exactly matching capitalization and extension.
+17. Every HTML image reference is listed in that same row's image_files, including solution-only images.
+18. No row references a missing image, external URL, data URL, or local computer path.
+19. Supplied images were handled as requested, generated diagrams are accurate, and images do not reveal the answers.
+20. There are no unnecessary images, unsupported file types, unsafe paths, links, encrypted entries, or nested image folders.
+21. The actual file sizes, image dimensions, row counts, and field lengths satisfy the import limits.
+22. The downloadable ZIP genuinely exists and contains the validated CSV and all referenced image files.
+
+Return the finished downloadable problem-package.zip with a brief count of questions and images. A CSV preview or a description of a proposed ZIP is not the completed deliverable. If this chat cannot create downloadable files, say so clearly and ask to use a file-capable environment; never invent a download link or claim a package was created.
+
+## My additional generation requirements
+
+I will add any further instructions below this line:

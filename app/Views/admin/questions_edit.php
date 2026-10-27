@@ -69,7 +69,10 @@
                 <div class="row">
                     <div class="col-sm-12">
                         <div class="form-group">
-                            <label for="question">Question</label>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label for="question" class="mb-0">Question</label>
+                                <a href="<?= site_url('admin/images') ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary"><i class="fa fa-images"></i> Images Library</a>
+                            </div>
                             <div id="questionEditor"><?= $question['question_html'] ?></div>
                         </div>
                     </div>

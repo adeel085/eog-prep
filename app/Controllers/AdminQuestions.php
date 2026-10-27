@@ -54,6 +54,7 @@ class AdminQuestions extends BaseController
             'questions' => $questions,
             'pager' => $questionModel->pager,
             'topics' => $topics,
+            'grades' => $gradeModel->findAll(),
             'flashData' => $this->session->getFlashdata(),
             'user' => $this->user
         ]);
@@ -263,115 +264,37 @@ class AdminQuestions extends BaseController
         return $this->response->setJSON(['status' => 'success', 'message' => 'Question deleted successfully']);
     }
 
-    public function importCsv()
+    public function importPackage()
     {
         if (!$this->user) {
-            return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Unauthorized']);
+            return $this->response->setStatusCode(401)->setJSON(['status' => 'error', 'message' => 'Your session has expired. Sign in again.']);
         }
-
-        if ($this->user['user_type'] != 'admin') {
-            return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Forbidden']);
+        if ($this->user['user_type'] !== 'admin') {
+            return $this->response->setStatusCode(403)->setJSON(['status' => 'error', 'message' => 'Only admins may import question packages.']);
         }
-
-        $questionModel = new QuestionModel();
-        $questionAnswersModel = new QuestionAnswersModel();
-
-        $file = $this->request->getFile('file');
-
-        if ($file && $file->isValid() && !$file->hasMoved()) {
-            // Move the uploaded file to the writable directory
-            $newFileName = $file->getRandomName();
-            $file->move(FCPATH . 'public/uploads', $newFileName);
-
-            // Parse the CSV file
-            $filePath = FCPATH . 'public/uploads/' . $newFileName;
-            $csvRows = array_map('str_getcsv', file($filePath));
-
-            for ($i = 1; $i < count($csvRows); $i++) {
-                $row = $csvRows[$i];
-
-                $topicName = $row[0];
-
-                $topicModel = new TopicModel();
-                $topicQuestionsModel = new TopicQuestionsModel();
-                $topic = $topicModel->where(['name' => $topicName])->first();
-
-                if (!$topic) {
-                    $topicId = $topicModel->insert([
-                        'name' => $topicName,
-                        'owner_id' => $this->user['id']
-                    ], true);
-                }
-                else {
-                    $topicId = $topic['id'];
-                }
-
-                $level = $row[1];
-                $questionType = $row[2];
-                $question = $row[3];
-                $solution = $row[4];
-
-                // Answers
-                $answer1 = $row[5];
-                $is_answer1_correct = (int) $row[6];
-                $answer2 = $row[7];
-                $is_answer2_correct = (int) $row[8];
-                $answer3 = $row[9];
-                $is_answer3_correct = (int) $row[10];
-                $answer4 = $row[11];
-                $is_answer4_correct = (int) $row[12];
-
-                $questionId = $questionModel->insert([
-                    'level' => $level,
-                    'question_type' => $questionType,
-                    'question_html' => $question,
-                    'solution_html' => $solution,
-                    'owner_id' => $this->user['id']
-                ]);
-
-                if ($questionId) {
-                    $topicQuestionsModel->insert([
-                        'topic_id' => $topicId,
-                        'question_id' => $questionId
-                    ]);
-
-                    $questionAnswersModel->insert([
-                        'question_id' => $questionId,
-                        'answer' => $answer1,
-                        'is_correct' => ($questionType == "text" || $is_answer1_correct == 1) ? 1 : 0
-                    ]);
-
-                    if (!empty($answer2)) {
-                        $questionAnswersModel->insert([
-                            'question_id' => $questionId,
-                            'answer' => $answer2,
-                            'is_correct' => ($questionType == "text" || $is_answer2_correct == 1) ? 1 : 0
-                        ]);
-                    }
-
-                    if (!empty($answer3)) {
-                        $questionAnswersModel->insert([
-                            'question_id' => $questionId,
-                            'answer' => $answer3,
-                            'is_correct' => ($questionType == "text" || $is_answer3_correct == 1) ? 1 : 0
-                        ]);
-                    }
-
-                    if (!empty($answer4)) {
-                        $questionAnswersModel->insert([
-                            'question_id' => $questionId,
-                            'answer' => $answer4,
-                            'is_correct' => ($questionType == "text" || $is_answer4_correct == 1) ? 1 : 0
-                        ]);
-                    }
-                }
+        try {
+            $file = $this->request->getFile('package');
+            if (!$file || !$file->isValid() || $file->hasMoved() || strtolower($file->getClientExtension()) !== 'zip'
+                || $file->getSize() > \App\Libraries\ProblemPackageImporter::MAX_ZIP_BYTES) {
+                throw new \App\Libraries\PackageValidationException(['Upload a valid ZIP package of at most 25 MB. Check the server upload limit if the file could not be received.']);
             }
+            $counts = (new \App\Libraries\ProblemPackageImporter())->import($file->getTempName(), (int) $this->user['id'],
+                (string) $this->request->getPost('topicId'), (string) $this->request->getPost('difficulty'), (string) $this->request->getPost('gradeId'));
+            return $this->response->setJSON(['status' => 'success', 'message' => "Imported {$counts['questions']} question(s) and {$counts['images']} image(s).",
+                'counts' => $counts, 'csrfHash' => csrf_hash()]);
+        } catch (\Throwable $error) {
+            $errors = $error instanceof \App\Libraries\PackageValidationException ? $error->errors : ['The package could not be imported. Check the migration, server ZIP support and storage permissions.'];
+            log_message('error', 'Package request failed: {error}', ['error' => $error->getMessage()]);
+            return $this->response->setStatusCode(422)->setJSON(['status' => 'error', 'message' => 'No questions or images were imported.', 'errors' => $errors, 'csrfHash' => csrf_hash()]);
+        }
+    }
 
-            return $this->response->setJSON(['status' => 'success', "message" => "CSV file imported successfully."]);
+    public function sampleCsv()
+    {
+        if (!$this->user || $this->user['user_type'] !== 'admin') {
+            return $this->response->setStatusCode($this->user ? 403 : 401)->setBody('Admin access required.');
         }
-        else {
-            return $this->response->setJSON(['status' => 'error', 'message' => 'File upload failed.']);
-        }
+        return $this->response->download(FCPATH . 'public/downloads/problem-package-sample.csv', null)->setFileName('problems.csv');
     }
 
     public function updateTopics() {

@@ -104,7 +104,10 @@ class AdminClasses extends BaseController
             return $this->response->setStatusCode(400)->setJSON(['status' => 'error', 'message' => 'Class with this name already exists']);
         }
 
-        $classModel->insert(['name' => $name, 'owner_id' => $this->user['id']]);
+        $classModel->insert([
+            'name' => $name,
+            'owner_id' => $this->user['id']
+        ]);
 
         $this->session->setFlashdata('status', 'class_created');
 

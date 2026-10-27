@@ -52,11 +52,9 @@
         <div class="card">
             <div class="card-body">
                 <div class="d-flex justify-content-end align-items-center mb-4" style="gap: 10px;">
-                    <label for="importCsvInput" class="btn btn-sm btn-primary mb-0 import-csv-btn">
-                        <i class="fa fa-file-csv"></i> Import CSV
-                    </label>
-
-                    <input type="file" id="importCsvInput" class="d-none" accept=".csv">
+                    <button type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#packageImportModal">
+                        <i class="fa fa-file-archive"></i> Import Problem Package
+                    </button>
 
                     <a href="<?= base_url('/admin/questions/new') ?>" class="btn btn-sm btn-primary">
                         <i class="fa fa-plus"></i> New Question
@@ -104,7 +102,11 @@
                                         }
                                         ?>
                                     </td>
-                                    <td><?= strip_tags($question['question_html']) ?></td>
+                                    <td><?= esc(strip_tags($question['question_html'])) ?>
+                                        <?php foreach (array_filter(explode('|', $question['tags'] ?? '')) as $tag): ?>
+                                            <span class="badge badge-light border"><?= esc($tag) ?></span>
+                                        <?php endforeach; ?>
+                                    </td>
                                     <td>
                                         <?php
                                         if ($question['grade']) {
@@ -151,9 +153,13 @@
     </div>
 </div>
 
+<?= $this->include('admin/problem_package_modal') ?>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('foot') ?>
+<script>window.packageToolsConfig = <?= json_encode(['csrfHeader' => csrf_header(), 'csrfHash' => csrf_hash(), 'csrfCookie' => config('Cookie')->prefix . config('Security')->cookieName], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;</script>
+<script src="<?= base_url('public/assets/js/admin-package-tools.js') ?>"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_HTML"></script>
 <script>
     $(() => {
@@ -256,67 +262,6 @@
             $("#questionId_topicsModal").val(questionId);
 
             $("#topicsModal").modal("show");
-        });
-
-        $("#importCsvInput").on("change", async function() {
-
-            $(".import-csv-btn").attr('data-content', $(this).html()).html('<i class="fa fa-spinner fa-spin"></i>').css('pointer-events', 'none');
-
-            let file = $(this).prop("files")[0];
-            let formData = new FormData();
-            formData.append("file", file);
-
-            try {
-                let res = await ajaxCall({
-                    url: baseUrl + 'admin/questions/import-csv',
-                    data: formData,
-                    csrfHeader: '<?= csrf_header() ?>',
-                    csrfHash: '<?= csrf_hash() ?>'
-                });
-
-                if (res.status == 'success') {
-                    window.location.reload();
-                    return;
-                }
-                else {
-                    new Notify({
-                        title: 'Error',
-                        text: response.message,
-                        status: 'error',
-                        autoclose: true,
-                        autotimeout: 3000
-                    });
-                }
-            }
-            catch (error) {
-                if (error.status == 401) {
-                    new Notify({
-                        title: 'Error',
-                        text: "Your session has expired. Redirecting to login page...",
-                        status: 'error',
-                        autoclose: true,
-                        autotimeout: 3000
-                    });
-
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2000);
-                    
-                    return;
-                }
-
-                new Notify({
-                    title: 'Error',
-                    text: error.responseJSON.message || 'Something went wrong',
-                    status: 'error',
-                    autoclose: true,
-                    autotimeout: 3000
-                });
-                return
-            }
-
-            // Reset import button
-            $(".import-csv-btn").html($(this).attr('data-content')).css('pointer-events', 'auto');
         });
 
         $(".delete-btn").click(async function() {
