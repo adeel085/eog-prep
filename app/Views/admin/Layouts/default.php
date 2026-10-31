@@ -207,7 +207,12 @@
 
                     <?php if (in_array($user['user_type'], ['admin', 'teacher'], true)): ?>
                     <li>
-                        <a href="<?= base_url('/admin/images') ?>"><i class="fa fa-images navbar-icon"></i>Images Library</a>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="<?= base_url('/admin/images') ?>">
+                                <i class="fa fa-images navbar-icon"></i>
+                                <span>Images Library</span>
+                            </a>
+                        </div>
                     </li>
                     <?php endif; ?>
 
